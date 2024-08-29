@@ -53,7 +53,7 @@ export default defineComponent({
       }
       this.loading = true;
       this.error = '';
-      const prompt = encodeURIComponent(textContent);
+      const prompt = encodeURIComponent(this.encodeTextChunks());
       try {
         const response = await axios.get(`http://localhost:3000/api/generate?prompt=${prompt}`);
         const generatedContent = response.data.content;
@@ -225,7 +225,9 @@ export default defineComponent({
         }
       });
     },
-    cleanupChunks() {
+    encodeTextChunks() {
+      return this.textChunks.map(chunk => chunk.pinned ? `~${chunk.text}~` : chunk.text).join('');
+    },
       let cleanedChunks: TextChunk[] = [];
       for (let i = 0; i < this.textChunks.length; i++) {
         const currentChunk = this.textChunks[i];
