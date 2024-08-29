@@ -145,7 +145,34 @@ export default defineComponent({
     },
     updateTextContent(event: Event) {
       const textContent = (event.target as HTMLElement).innerText;
-      this.textChunks = [{ text: textContent, pinned: false }];
+      const newChunks: TextChunk[] = [];
+      let currentIndex = 0;
+
+      for (const chunk of this.textChunks) {
+        const chunkLength = chunk.text.length;
+        if (currentIndex + chunkLength <= textContent.length) {
+          newChunks.push({
+            text: textContent.slice(currentIndex, currentIndex + chunkLength),
+            pinned: chunk.pinned
+          });
+        } else {
+          newChunks.push({
+            text: textContent.slice(currentIndex),
+            pinned: chunk.pinned
+          });
+          break;
+        }
+        currentIndex += chunkLength;
+      }
+
+      if (currentIndex < textContent.length) {
+        newChunks.push({
+          text: textContent.slice(currentIndex),
+          pinned: this.textChunks.length > 0 ? this.textChunks[this.textChunks.length - 1].pinned : false
+        });
+      }
+
+      this.textChunks = newChunks;
       this.saveCursorPosition();
     },
     mergeGeneratedContent(chunks: TextChunk[], generatedContent: string) {
