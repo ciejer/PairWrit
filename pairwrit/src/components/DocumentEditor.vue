@@ -142,6 +142,7 @@ export default defineComponent({
 
       this.textChunks = newChunks;
       this.cleanupChunks();
+      this.saveCursorPosition();
     },
     updateTextContent(event: Event) {
       const textContent = (event.target as HTMLElement).innerText;
@@ -174,6 +175,7 @@ export default defineComponent({
       }
 
       this.textChunks = newChunks;
+      this.cleanupChunks();
       this.saveCursorPosition();
     },
     mergeGeneratedContent(chunks: TextChunk[], generatedContent: string) {
