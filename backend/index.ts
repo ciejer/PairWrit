@@ -1,8 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
+require('dotenv').config();
 
-// Define the OpenAI API key at the top
+// Access the OpenAI API key
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const app = express();
 const port = 3000;
