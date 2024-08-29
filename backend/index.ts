@@ -1,15 +1,54 @@
 import express from 'express';
-     import cors from 'cors';
+import cors from 'cors';
+import axios from 'axios';
 
-     const app = express();
-     const port = 3000;
+// Define the OpenAI API key at the top
 
-     app.use(cors());
+const app = express();
+const port = 3000;
 
-     app.get('/api/message', (req, res) => {
-       res.json({ message: 'Hello from the backend!' });
-     });
+app.use(cors());
 
-     app.listen(port, () => {
-       console.log(`Server is running at http://localhost:${port}`);
-     });
+app.get('/api/generate', async (req, res) => {
+  const prompt = req.query.prompt as string;
+  console.log('Received prompt:', prompt); // Debugging statement
+
+  if (!prompt) {
+    return res.status(400).send('Prompt is required');
+  }
+
+  try {
+    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful assistant.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ]
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      }
+    });
+
+    const generatedContent = response.data.choices[0].message.content;
+    res.json({ content: generatedContent });
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error('Error calling OpenAI API:', error.response ? error.response.data : error.message); // Detailed logging
+    } else {
+      console.error('Unexpected error:', error); // Handle unexpected errors
+    }
+    res.status(500).send('Error generating content');
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:3000`);
+});
