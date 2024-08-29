@@ -155,14 +155,15 @@ export default defineComponent({
             text: textContent.slice(currentIndex, currentIndex + chunkLength),
             pinned: chunk.pinned
           });
+          currentIndex += chunkLength;
         } else {
           newChunks.push({
             text: textContent.slice(currentIndex),
             pinned: chunk.pinned
           });
+          currentIndex = textContent.length;
           break;
         }
-        currentIndex += chunkLength;
       }
 
       if (currentIndex < textContent.length) {
