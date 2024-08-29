@@ -4,7 +4,11 @@ import router from './router';
 import store from './store';
 import './index.css'; // Import Tailwind CSS
 
-createApp(App)
-  .use(router)
-  .use(store)
-  .mount('#app');
+const app = createApp(App);
+
+app.use(router);
+app.use(store);
+
+router.isReady().then(() => {
+  app.mount('#app');
+});
