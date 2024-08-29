@@ -1,6 +1,6 @@
 import { createStore } from 'vuex';
 
-const store = createStore({
+export default createStore({
   state: {
     documentContent: ''
   },
@@ -21,7 +21,6 @@ const store = createStore({
       commit('loadDocumentContent');
     }
   },
-  modules: {}
+  modules: {
+  }
 });
-
-export default store;

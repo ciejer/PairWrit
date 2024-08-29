@@ -104,3 +104,4 @@ Thumbs.db
 *.iws
 *.iml
 *.ipr
+.aider*
