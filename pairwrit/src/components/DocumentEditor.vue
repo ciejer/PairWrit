@@ -51,6 +51,8 @@ export default defineComponent({
         this.error = 'Document content is empty';
         return;
       }
+      this.textChunks = cleanedChunks;
+    }
       this.loading = true;
       this.error = '';
       const prompt = encodeURIComponent(this.encodeTextChunks());
@@ -228,6 +230,7 @@ export default defineComponent({
     encodeTextChunks() {
       return this.textChunks.map(chunk => chunk.pinned ? `~${chunk.text}~` : chunk.text).join('');
     },
+    cleanupChunks() {
       let cleanedChunks: TextChunk[] = [];
       for (let i = 0; i < this.textChunks.length; i++) {
         const currentChunk = this.textChunks[i];
