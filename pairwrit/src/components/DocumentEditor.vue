@@ -215,10 +215,17 @@ export default defineComponent({
         const leadingSpace = leadingMatch ? leadingMatch[0] : '';
         const trailingSpace = trailingMatch ? trailingMatch[0] : '';
         const cleanedText = text.trim();
-        newChunks.push({
-          text: pinned ? leadingSpace + cleanedText.slice(2, -2) + trailingSpace : cleanedText,
-          pinned: pinned
-        });
+        if (pinned) {
+          newChunks.push({
+            text: leadingSpace + cleanedText.slice(2, -2) + trailingSpace,
+            pinned: true
+          });
+        } else {
+          newChunks.push({
+            text: cleanedText,
+            pinned: false
+          });
+        }
       }
 
       console.log('New chunks after merging:', newChunks);
@@ -264,8 +271,15 @@ export default defineComponent({
         }
       });
     },
-    encodeTextChunks() {
-      return this.textChunks.map(chunk => chunk.pinned ? `~<${chunk.text}>~` : chunk.text).join('');
+    encodeTextChunks(): string {
+      return this.textChunks.map(chunk => {
+        const leadingMatch = chunk.text.match(/^\s+/);
+        const trailingMatch = chunk.text.match(/\s+$/);
+        const leadingSpace = leadingMatch ? leadingMatch[0] : '';
+        const trailingSpace = trailingMatch ? trailingMatch[0] : '';
+        const cleanedText = chunk.text.trim();
+        return chunk.pinned ? `${leadingSpace}~<${cleanedText}>~${trailingSpace}` : chunk.text;
+      }).join('');
     },
     cleanupChunks() {
       let cleanedChunks: TextChunk[] = [];
