@@ -98,21 +98,13 @@ export default defineComponent({
       if (!selection || selection.rangeCount === 0) return;
 
       const range = selection.getRangeAt(0);
-      let selectedText = range.toString().trim();
+      const selectedText = range.toString();
       if (!selectedText) return;
 
       const startContainer = range.startContainer;
       const endContainer = range.endContainer;
-      let startOffset = range.startOffset;
-      let endOffset = range.endOffset;
-
-      // Adjust startOffset and endOffset to exclude leading and trailing spaces
-      while (startOffset < range.startContainer.textContent!.length && range.startContainer.textContent![startOffset].match(/\s/)) {
-        startOffset++;
-      }
-      while (endOffset > 0 && range.endContainer.textContent![endOffset - 1].match(/\s/)) {
-        endOffset--;
-      }
+      const startOffset = range.startOffset;
+      const endOffset = range.endOffset;
 
       let currentIndex = 0;
       let startIndex = -1;
@@ -151,12 +143,7 @@ export default defineComponent({
           const overlapStart = Math.max(startIndex, currentIndex);
           const overlapEnd = Math.min(endIndex, currentIndex + chunkLength);
           const overlapText = chunk.text.slice(overlapStart - currentIndex, overlapEnd - currentIndex);
-          const trimmedOverlapText = overlapText.trim();
-          const leadingMatch = overlapText ? overlapText.match(/^\s+/) : null;
-          const trailingMatch = overlapText ? overlapText.match(/\s+$/) : null;
-          const leadingSpace = leadingMatch ? leadingMatch[0] : '';
-          const trailingSpace = trailingMatch ? trailingMatch[0] : '';
-          newChunks.push({ text: leadingSpace + trimmedOverlapText + trailingSpace, pinned: !chunk.pinned });
+          newChunks.push({ text: overlapText, pinned: !chunk.pinned });
 
           if (currentIndex + chunkLength > endIndex) {
             const after = chunk.text.slice(endIndex - currentIndex);
