@@ -51,8 +51,6 @@ export default defineComponent({
         this.error = 'Document content is empty';
         return;
       }
-      this.textChunks = cleanedChunks;
-    }
       this.loading = true;
       this.error = '';
       const prompt = encodeURIComponent(this.encodeTextChunks());
@@ -69,7 +67,7 @@ export default defineComponent({
       } finally {
         this.loading = false;
       }
-    },
+    }
     saveDocument() {
       this.$store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
       this.$store.dispatch('saveDocument');
