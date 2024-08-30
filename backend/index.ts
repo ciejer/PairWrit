@@ -21,17 +21,18 @@ app.get('/api/generate', async (req, res) => {
 
   try {
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful assistant.'
+          content: 'You are an AI document iterator. You will receive documents which are a combination of garbage AI-generated content and pinned user-validated content. User-validated content is tagged ~<like this>~. Please do not change any text between ~< and >~ - this is your only true input. Modify every piece of non-pinned text to make the document make sense, though try to maintain roughly the same length between black sections.'
         },
         {
           role: 'user',
-          content: `Please do not change any text between ~< >~ and leave the ~< >~ in place. Modify all other text to make the document make sense. Here is the document content: ${prompt}`
+          content: `Here is the document content: ${prompt}`
         }
-      ]
+      ],
+      "temperature": 0.9
     }, {
       headers: {
         'Content-Type': 'application/json',
