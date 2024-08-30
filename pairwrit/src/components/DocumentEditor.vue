@@ -71,31 +71,6 @@ export default defineComponent({
         this.loading = false;
       }
     },
-      const instance = getCurrentInstance();
-      if (!instance) return;
-      const store = (instance.proxy as any).$store;
-      const textContent = this.textChunks.map(chunk => chunk.text).join('');
-      if (!textContent) {
-        this.error = 'Document content is empty';
-        return;
-      }
-      this.loading = true;
-      this.error = '';
-      const prompt = encodeURIComponent(this.encodeTextChunks());
-      try {
-        const response = await axios.get(`http://localhost:3000/api/generate?prompt=${prompt}`);
-        const generatedContent = response.data.content;
-        this.textChunks = this.mergeGeneratedContent(this.textChunks, generatedContent);
-        this.cleanupChunks();
-        store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
-        this.saveDocument();
-      } catch (error) {
-        console.error('Error generating content:', error);
-        this.error = 'Failed to generate content. Please try again.';
-      } finally {
-        this.loading = false;
-      }
-    },
     saveDocument() {
       const instance = getCurrentInstance();
       if (!instance) return;
