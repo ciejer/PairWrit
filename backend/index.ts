@@ -45,6 +45,13 @@ ${prompt}`
     });
 
     const generatedContent = response.data.choices[0].message.content;
+    const inputPinnedText = extractPinnedText(prompt);
+    const outputPinnedText = extractPinnedText(generatedContent);
+
+    if (!comparePinnedText(inputPinnedText, outputPinnedText)) {
+      return res.status(500).send('Pinned text was altered in the generated content');
+    }
+
     res.json({ content: generatedContent });
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -56,6 +63,34 @@ ${prompt}`
   }
 });
 
-app.listen(port, () => {
+/**
+ * Extracts pinned text from the given content.
+ * Pinned text is denoted by ~< and >~.
+ */
+function extractPinnedText(content: string): string[] {
+  const regex = /~<([^>]+)>~/g;
+  const pinnedText: string[] = [];
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    pinnedText.push(match[1].trim());
+  }
+  return pinnedText;
+}
+
+/**
+ * Compares two arrays of pinned text.
+ * Returns true if they are identical, false otherwise.
+ */
+function comparePinnedText(inputPinnedText: string[], outputPinnedText: string[]): boolean {
+  if (inputPinnedText.length !== outputPinnedText.length) {
+    return false;
+  }
+  for (let i = 0; i < inputPinnedText.length; i++) {
+    if (inputPinnedText[i] !== outputPinnedText[i]) {
+      return false;
+    }
+  }
+  return true;
+}
   console.log(`Server is running at http://localhost:3000`);
 });
