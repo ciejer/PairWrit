@@ -47,10 +47,6 @@ export default defineComponent({
     ...mapActions(['saveDocument', 'loadDocument']),
     async generateContent() {
       console.log('Generate Content button clicked');
-      const instance = getCurrentInstance();
-      console.log('Current instance:', instance);
-      if (!instance) return;
-      const store = (instance.proxy as any).$store;
       const textContent = this.textChunks.map(chunk => chunk.text).join('');
       console.log('Text content:', textContent);
       if (!textContent) {
@@ -64,10 +60,7 @@ export default defineComponent({
       try {
         console.log('Sending request to backend with prompt:', prompt);
         const response = await axios.get('http://localhost:3000/api/generate', {
-          params: { prompt },
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          params: { prompt }
         });
         console.log('API call made successfully');
         const generatedContent = response.data.content;
@@ -75,7 +68,7 @@ export default defineComponent({
         console.log('Received generated content:', response.data);
         this.textChunks = this.mergeGeneratedContent(this.textChunks, response.data.trim());
         this.cleanupChunks();
-        store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
+        this.$store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
         this.saveDocument();
       } catch (error) {
         console.error('Error generating content:', (error as any).message);
@@ -86,11 +79,8 @@ export default defineComponent({
       }
     },
     saveDocument() {
-      const instance = getCurrentInstance();
-      if (!instance) return;
-      const store = (instance.proxy as any).$store;
-      store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
-      store.dispatch('saveDocument');
+      this.$store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
+      this.$store.dispatch('saveDocument');
     },
     handleSpacebar(event: KeyboardEvent) {
       const selection = window.getSelection();
