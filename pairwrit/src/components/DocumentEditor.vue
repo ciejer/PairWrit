@@ -142,7 +142,7 @@ export default defineComponent({
 
           const overlapStart = Math.max(startIndex, currentIndex);
           const overlapEnd = Math.min(endIndex, currentIndex + chunkLength);
-          const overlapText = chunk.text.slice(overlapStart - currentIndex, overlapEnd - currentIndex);
+          const overlapText = chunk.text.slice(overlapStart - currentIndex, overlapEnd - currentIndex).trim();
           newChunks.push({ text: overlapText, pinned: !chunk.pinned });
 
           if (currentIndex + chunkLength > endIndex) {
@@ -167,8 +167,9 @@ export default defineComponent({
       while ((match = regex.exec(textContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
+        const cleanedText = text.trim();
         newChunks.push({
-          text: pinned ? text.slice(2, -2) : text,
+          text: pinned ? cleanedText.slice(2, -2) : cleanedText,
           pinned: pinned
         });
       }
@@ -185,8 +186,9 @@ export default defineComponent({
       while ((match = regex.exec(generatedContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
+        const cleanedText = text.trim();
         newChunks.push({
-          text: pinned ? text.slice(2, -2) : text,
+          text: pinned ? cleanedText.slice(2, -2) : cleanedText,
           pinned: pinned
         });
       }
