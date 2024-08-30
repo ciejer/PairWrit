@@ -170,7 +170,7 @@ export default defineComponent({
       while ((match = regex.exec(textContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
-        const leadingSpace = text.startsWith(' ') || pinned ? ' ' : '';
+        const leadingSpace = text.startsWith(' ') ? ' ' : '';
         const trailingSpace = text.endsWith(' ') ? ' ' : '';
         const cleanedText = text.trim();
         newChunks.push({
