@@ -183,7 +183,32 @@ export default defineComponent({
         text: segment,
         pinned: false,
       }));
-      return chunks.map((chunk, index) => chunk.pinned ? chunk : newChunks[index] || chunk);
+
+      let mergedChunks: TextChunk[] = [];
+      let newChunkIndex = 0;
+
+      for (let chunk of chunks) {
+        if (chunk.pinned) {
+          mergedChunks.push(chunk);
+        } else {
+          while (newChunkIndex < newChunks.length && newChunks[newChunkIndex].text.trim() === '') {
+            newChunkIndex++;
+          }
+          if (newChunkIndex < newChunks.length) {
+            mergedChunks.push(newChunks[newChunkIndex]);
+            newChunkIndex++;
+          } else {
+            mergedChunks.push(chunk);
+          }
+        }
+      }
+
+      while (newChunkIndex < newChunks.length) {
+        mergedChunks.push(newChunks[newChunkIndex]);
+        newChunkIndex++;
+      }
+
+      return mergedChunks;
     },
     saveCursorPosition() {
       const selection = window.getSelection();
