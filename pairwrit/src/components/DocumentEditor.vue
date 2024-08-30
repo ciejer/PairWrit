@@ -179,36 +179,20 @@ export default defineComponent({
       this.saveCursorPosition();
     },
     mergeGeneratedContent(chunks: TextChunk[], generatedContent: string) {
-      const newChunks = generatedContent.split(/(\s+)/).map(segment => ({
-        text: segment,
-        pinned: false,
-      }));
+      const newChunks: TextChunk[] = [];
+      const regex = /(~<[^>]+>~|[^~]+)/g;
+      let match;
 
-      let mergedChunks: TextChunk[] = [];
-      let newChunkIndex = 0;
-
-      for (let chunk of chunks) {
-        if (chunk.pinned) {
-          mergedChunks.push(chunk);
-        } else {
-          while (newChunkIndex < newChunks.length && newChunks[newChunkIndex].text.trim() === '') {
-            newChunkIndex++;
-          }
-          if (newChunkIndex < newChunks.length) {
-            mergedChunks.push(newChunks[newChunkIndex]);
-            newChunkIndex++;
-          } else {
-            mergedChunks.push(chunk);
-          }
-        }
+      while ((match = regex.exec(generatedContent)) !== null) {
+        const text = match[0];
+        const pinned = text.startsWith('~<') && text.endsWith('>~');
+        newChunks.push({
+          text: pinned ? text.slice(2, -2) : text,
+          pinned: pinned
+        });
       }
 
-      while (newChunkIndex < newChunks.length) {
-        mergedChunks.push(newChunks[newChunkIndex]);
-        newChunkIndex++;
-      }
-
-      return mergedChunks;
+      return newChunks;
     },
     saveCursorPosition() {
       const selection = window.getSelection();
@@ -251,7 +235,7 @@ export default defineComponent({
       });
     },
     encodeTextChunks() {
-      return this.textChunks.map(chunk => chunk.pinned ? `~${chunk.text}~` : chunk.text).join('');
+      return this.textChunks.map(chunk => chunk.pinned ? `~<${chunk.text}>~` : chunk.text).join('');
     },
     cleanupChunks() {
       let cleanedChunks: TextChunk[] = [];

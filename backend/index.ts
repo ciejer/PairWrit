@@ -29,7 +29,7 @@ app.get('/api/generate', async (req, res) => {
         },
         {
           role: 'user',
-          content: prompt
+          content: `Please do not change any text between ~< >~ and leave the ~< >~ in place. Modify all other text to make the document make sense. Here is the document content: ${prompt}`
         }
       ]
     }, {
