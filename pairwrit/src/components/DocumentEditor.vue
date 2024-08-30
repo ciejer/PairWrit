@@ -67,7 +67,7 @@ export default defineComponent({
       } finally {
         this.loading = false;
       }
-    }
+    },
     saveDocument() {
       this.$store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
       this.$store.dispatch('saveDocument');
