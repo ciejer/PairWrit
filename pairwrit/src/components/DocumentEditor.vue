@@ -46,10 +46,12 @@ export default defineComponent({
   methods: {
     ...mapActions(['saveDocument', 'loadDocument']),
     async generateContent() {
+      console.log('Generate Content button clicked');
       const instance = getCurrentInstance();
       if (!instance) return;
       const store = (instance.proxy as any).$store;
       const textContent = this.textChunks.map(chunk => chunk.text).join('');
+      console.log('Text content:', textContent);
       if (!textContent) {
         this.error = 'Document content is empty';
         return;
@@ -58,16 +60,18 @@ export default defineComponent({
       this.error = '';
       const prompt = this.encodeTextChunks();
       try {
-        const response = await axios.get(`http://localhost:3000/api/generate`, {
+        console.log('Sending request to backend with prompt:', prompt);
+        const response = await axios.get('http://localhost:3000/api/generate', {
           params: { prompt }
         });
         const generatedContent = response.data.content;
+        console.log('Received generated content:', generatedContent);
         this.textChunks = this.mergeGeneratedContent(this.textChunks, generatedContent.trim());
         this.cleanupChunks();
         store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
         this.saveDocument();
       } catch (error) {
-        console.error('Error generating content:', error);
+        console.error('Error generating content:', error.message);
         this.error = 'Failed to generate content. Please try again.';
       } finally {
         this.loading = false;
