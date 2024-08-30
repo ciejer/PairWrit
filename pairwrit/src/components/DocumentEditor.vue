@@ -159,7 +159,7 @@ export default defineComponent({
           currentIndex += chunkLength;
         } else {
           newChunks.push({
-            text: textContent.slice(currentIndex),
+            text: textContent.slice(currentIndex, currentIndex + (textContent.length - currentIndex)),
             pinned: chunk.pinned
           });
           currentIndex = textContent.length;
@@ -170,7 +170,7 @@ export default defineComponent({
       if (currentIndex < textContent.length) {
         newChunks.push({
           text: textContent.slice(currentIndex),
-          pinned: this.textChunks.length > 0 ? this.textChunks[this.textChunks.length - 1].pinned : false
+          pinned: false
         });
       }
 
