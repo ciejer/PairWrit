@@ -210,19 +210,14 @@ export default defineComponent({
       while ((match = regex.exec(generatedContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
-        const leadingMatch = text ? text.match(/^\s+/) : null;
-        const trailingMatch = text ? text.match(/\s+$/) : null;
-        const leadingSpace = leadingMatch ? leadingMatch[0] : '';
-        const trailingSpace = trailingMatch ? trailingMatch[0] : '';
-        const cleanedText = text.trim();
         if (pinned) {
           newChunks.push({
-            text: leadingSpace + cleanedText.slice(2, -2) + trailingSpace,
+            text: `<span class="text-black">${text.slice(2, -2)}</span>`,
             pinned: true
           });
         } else {
           newChunks.push({
-            text: cleanedText,
+            text: text,
             pinned: false
           });
         }
