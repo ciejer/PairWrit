@@ -25,7 +25,7 @@ app.get('/api/generate', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: 'You are an AI document iterator. You will receive documents which are a combination of garbage AI-generated content and pinned user-validated content. User-validated content is tagged ~<like this>~. Please do not change any text between ~< and >~ - this is your only true input. Modify every piece of non-pinned text to make the document make sense, though try to maintain roughly the same length between black sections.'
+          content: 'You are an AI document iterator. You will receive documents which are a combination of AI-generated content and user-validated content. User-validated content is tagged ~<like this>~. Your task is to modify only the non-pinned text to make the document coherent and meaningful. Do not change any text between ~< and >~ and ensure these markers remain in place. Maintain the overall length of the non-pinned sections as much as possible.'
         },
         {
           role: 'user',
