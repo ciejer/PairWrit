@@ -48,7 +48,7 @@ export default defineComponent({
     async generateContent() {
       const instance = getCurrentInstance();
       if (!instance) return;
-      const store = instance.proxy.$store;
+      const store = instance.proxy?.$store;
       const textContent = this.textChunks.map(chunk => chunk.text).join('');
       if (!textContent) {
         this.error = 'Document content is empty';
@@ -74,7 +74,7 @@ export default defineComponent({
     saveDocument() {
       const instance = getCurrentInstance();
       if (!instance) return;
-      const store = instance.proxy.$store;
+      const store = instance.proxy?.$store;
       store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
       store.dispatch('saveDocument');
     },
@@ -211,7 +211,7 @@ export default defineComponent({
       const editableText = this.$el.querySelector('.editable-text');
       if (editableText) {
         const nodes = Array.from(editableText.childNodes);
-        const nodeIndex = nodes.findIndex((n: Node) => n.contains(node));
+        const nodeIndex = nodes.findIndex((n) => (n as Node).contains(node));
         this.cursorPosition = { nodeIndex, offset };
       }
     },
