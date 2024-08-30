@@ -27,7 +27,7 @@
     methods: {
       ...mapActions(['saveDocument', 'loadDocument']),
       saveDocument() {
-        this.saveDocument(this.documentContent);
+        this.saveDocument();
       },
       applyTemplate() {
         this.documentContent = this.selectedTemplate;

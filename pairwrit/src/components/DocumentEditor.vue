@@ -48,7 +48,7 @@ export default defineComponent({
     async generateContent() {
       const instance = getCurrentInstance();
       if (!instance) return;
-      const store = instance.proxy?.$store;
+      const store = (instance.proxy as any).$store;
       const textContent = this.textChunks.map(chunk => chunk.text).join('');
       if (!textContent) {
         this.error = 'Document content is empty';
@@ -74,7 +74,7 @@ export default defineComponent({
     saveDocument() {
       const instance = getCurrentInstance();
       if (!instance) return;
-      const store = instance.proxy?.$store;
+      const store = (instance.proxy as any).$store;
       store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
       store.dispatch('saveDocument');
     },
