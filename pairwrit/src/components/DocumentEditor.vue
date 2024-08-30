@@ -58,15 +58,13 @@ export default defineComponent({
       }
       this.loading = true;
       this.error = '';
-      const prompt = this.encodeTextChunks();
+      const prompt = encodeURIComponent(this.encodeTextChunks());
       try {
         console.log('Sending request to backend with prompt:', prompt);
-        const response = await axios.get('http://localhost:3000/api/generate', {
-          params: { prompt }
-        });
+        const response = await axios.get(`http://localhost:3000/api/generate?prompt=${prompt}`);
         const generatedContent = response.data.content;
-        console.log('Received generated content:', generatedContent);
-        this.textChunks = this.mergeGeneratedContent(this.textChunks, generatedContent.trim());
+        console.log('Received generated content:', response.data.content);
+        this.textChunks = this.mergeGeneratedContent(this.textChunks, response.data.content.trim());
         this.cleanupChunks();
         store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
         this.saveDocument();
