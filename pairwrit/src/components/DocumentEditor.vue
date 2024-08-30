@@ -98,13 +98,21 @@ export default defineComponent({
       if (!selection || selection.rangeCount === 0) return;
 
       const range = selection.getRangeAt(0);
-      const selectedText = range.toString();
+      let selectedText = range.toString().trim();
       if (!selectedText) return;
 
       const startContainer = range.startContainer;
       const endContainer = range.endContainer;
-      const startOffset = range.startOffset;
-      const endOffset = range.endOffset;
+      let startOffset = range.startOffset;
+      let endOffset = range.endOffset;
+
+      // Adjust startOffset and endOffset to exclude leading and trailing spaces
+      while (startOffset < range.startContainer.textContent!.length && range.startContainer.textContent![startOffset].match(/\s/)) {
+        startOffset++;
+      }
+      while (endOffset > 0 && range.endContainer.textContent![endOffset - 1].match(/\s/)) {
+        endOffset--;
+      }
 
       let currentIndex = 0;
       let startIndex = -1;
