@@ -22,7 +22,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick, getCurrentInstance } from 'vue';
+import { defineComponent, nextTick } from 'vue';
+import { useStore } from 'vuex';
 import { mapState, mapActions } from 'vuex';
 import axios from 'axios';
 
@@ -37,7 +38,8 @@ export default defineComponent({
       loading: false,
       error: '',
       textChunks: [] as TextChunk[],
-      cursorPosition: { nodeIndex: 0, offset: 0 }
+      cursorPosition: { nodeIndex: 0, offset: 0 },
+      store: useStore()
     };
   },
   computed: {
@@ -68,7 +70,7 @@ export default defineComponent({
         console.log('Received generated content:', response.data);
         this.textChunks = this.mergeGeneratedContent(this.textChunks, response.data.trim());
         this.cleanupChunks();
-        this.$store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
+        this.store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
         this.saveDocument();
       } catch (error) {
         console.error('Error generating content:', (error as any).message);
@@ -79,8 +81,8 @@ export default defineComponent({
       }
     },
     saveDocument() {
-      this.$store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
-      this.$store.dispatch('saveDocument');
+      this.store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
+      this.store.dispatch('saveDocument');
     },
     handleSpacebar(event: KeyboardEvent) {
       const selection = window.getSelection();
