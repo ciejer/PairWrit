@@ -71,7 +71,7 @@ export default defineComponent({
         store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
         this.saveDocument();
       } catch (error) {
-        console.error('Error generating content:', error.message);
+        console.error('Error generating content:', (error as any).message);
         this.error = 'Failed to generate content. Please try again.';
       } finally {
         this.loading = false;
