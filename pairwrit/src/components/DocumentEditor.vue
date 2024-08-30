@@ -172,8 +172,10 @@ export default defineComponent({
       while ((match = regex.exec(textContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
-        const leadingSpace = text.match(/^\s+/) ? text.match(/^\s+/)[0] : '';
-        const trailingSpace = text.match(/\s+$/) ? text.match(/\s+$/)[0] : '';
+        const leadingMatch = text ? text.match(/^\s+/) : null;
+        const trailingMatch = text ? text.match(/\s+$/) : null;
+        const leadingSpace = leadingMatch ? leadingMatch[0] : '';
+        const trailingSpace = trailingMatch ? trailingMatch[0] : '';
         const cleanedText = text.trim();
         newChunks.push({
           text: pinned ? leadingSpace + cleanedText.slice(2, -2) + trailingSpace : cleanedText,
@@ -193,8 +195,10 @@ export default defineComponent({
       while ((match = regex.exec(generatedContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
-        const leadingSpace = text.match(/^\s+/) ? text.match(/^\s+/)[0] : '';
-        const trailingSpace = text.match(/\s+$/) ? text.match(/\s+$/)[0] : '';
+        const leadingMatch = text ? text.match(/^\s+/) : null;
+        const trailingMatch = text ? text.match(/\s+$/) : null;
+        const leadingSpace = leadingMatch ? leadingMatch[0] : '';
+        const trailingSpace = trailingMatch ? trailingMatch[0] : '';
         const cleanedText = text.trim();
         newChunks.push({
           text: pinned ? leadingSpace + cleanedText.slice(2, -2) + trailingSpace : cleanedText,
