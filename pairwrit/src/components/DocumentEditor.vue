@@ -48,6 +48,7 @@ export default defineComponent({
     async generateContent() {
       console.log('Generate Content button clicked');
       const instance = getCurrentInstance();
+      console.log('Current instance:', instance);
       if (!instance) return;
       const store = (instance.proxy as any).$store;
       const textContent = this.textChunks.map(chunk => chunk.text).join('');
