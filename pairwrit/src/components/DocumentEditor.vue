@@ -159,7 +159,7 @@ export default defineComponent({
           currentIndex += chunkLength;
         } else {
           newChunks.push({
-            text: textContent.slice(currentIndex, currentIndex + (textContent.length - currentIndex)),
+            text: textContent.slice(currentIndex, textContent.length),
             pinned: chunk.pinned
           });
           currentIndex = textContent.length;
