@@ -59,12 +59,18 @@ export default defineComponent({
       this.loading = true;
       this.error = '';
       const prompt = this.encodeTextChunks();
+      console.log('Encoded prompt:', prompt);
       try {
         console.log('Sending request to backend with prompt:', prompt);
         const response = await axios.get('http://localhost:3000/api/generate', {
-          params: { prompt }
+          params: { prompt },
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
+        console.log('API call made successfully');
         const generatedContent = response.data.content;
+        console.log('Generated content:', generatedContent);
         console.log('Received generated content:', response.data);
         this.textChunks = this.mergeGeneratedContent(this.textChunks, response.data.trim());
         this.cleanupChunks();
@@ -72,6 +78,7 @@ export default defineComponent({
         this.saveDocument();
       } catch (error) {
         console.error('Error generating content:', (error as any).message);
+        console.error('Error details:', error);
         this.error = 'Failed to generate content. Please try again.';
       } finally {
         this.loading = false;
