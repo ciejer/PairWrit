@@ -16,7 +16,7 @@
   export default defineComponent({
     data() {
       return {
-        documentContent: loadDocument(),
+        documentContent: '',
         selectedTemplate: '',
         templates: [
           { id: 1, name: 'Template 1', content: 'Template Content 1' },
@@ -27,7 +27,7 @@
     methods: {
       ...mapActions(['saveDocument', 'loadDocument']),
       saveDocument() {
-        saveDocument(this.documentContent);
+        this.saveDocument(this.documentContent);
       },
       applyTemplate() {
         this.documentContent = this.selectedTemplate;
