@@ -153,30 +153,15 @@ export default defineComponent({
     updateTextContent(event: Event) {
       const textContent = (event.target as HTMLElement).innerText;
       const newChunks: TextChunk[] = [];
-      let currentIndex = 0;
+      const regex = /(~<[^>]+>~|[^~]+)/g;
+      let match;
 
-      for (const chunk of this.textChunks) {
-        const chunkLength = chunk.text.length;
-        if (currentIndex + chunkLength <= textContent.length) {
-          newChunks.push({
-            text: textContent.slice(currentIndex, currentIndex + chunkLength),
-            pinned: chunk.pinned
-          });
-          currentIndex += chunkLength;
-        } else {
-          newChunks.push({
-            text: textContent.slice(currentIndex, textContent.length),
-            pinned: chunk.pinned
-          });
-          currentIndex = textContent.length;
-          break;
-        }
-      }
-
-      if (currentIndex < textContent.length) {
+      while ((match = regex.exec(textContent)) !== null) {
+        const text = match[0];
+        const pinned = text.startsWith('~<') && text.endsWith('>~');
         newChunks.push({
-          text: textContent.slice(currentIndex),
-          pinned: false
+          text: pinned ? text.slice(2, -2) : text,
+          pinned: pinned
         });
       }
 
