@@ -68,7 +68,9 @@ export default defineComponent({
         const generatedContent = response.data.content;
         console.log('Generated content:', generatedContent);
         console.log('Received generated content:', response.data);
-        this.textChunks = this.mergeGeneratedContent(this.textChunks, response.data.trim());
+        console.log('Merging generated content with existing text chunks');
+        this.textChunks = this.mergeGeneratedContent(this.textChunks, generatedContent.trim());
+        console.log('Updated text chunks:', this.textChunks);
         this.cleanupChunks();
         this.store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
         this.saveDocument();
@@ -159,7 +161,7 @@ export default defineComponent({
     updateTextContent(event: Event) {
       const textContent = (event.target as HTMLElement).innerText;
       const newChunks: TextChunk[] = [];
-      const regex = /(~<[^>]+>~|[^~]+)/g;
+      const regex = /(~<[^>]+>~|[^~]+)/g; // Regex to match pinned and non-pinned text
       let match;
 
       while ((match = regex.exec(textContent)) !== null) {
@@ -175,7 +177,7 @@ export default defineComponent({
       this.cleanupChunks();
       this.saveCursorPosition();
     },
-    mergeGeneratedContent(chunks: TextChunk[], generatedContent: string) {
+    mergeGeneratedContent(chunks: TextChunk[], generatedContent: string): TextChunk[] {
       const newChunks: TextChunk[] = [];
       const regex = /(~<[^>]+>~|[^~]+)/g;
       let match;
@@ -189,6 +191,7 @@ export default defineComponent({
         });
       }
 
+      console.log('New chunks after merging:', newChunks);
       return newChunks;
     },
     saveCursorPosition() {
