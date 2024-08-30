@@ -144,8 +144,8 @@ export default defineComponent({
           const overlapEnd = Math.min(endIndex, currentIndex + chunkLength);
           const overlapText = chunk.text.slice(overlapStart - currentIndex, overlapEnd - currentIndex);
           const trimmedOverlapText = overlapText.trim();
-          const leadingSpace = overlapText.startsWith(' ') ? ' ' : '';
-          const trailingSpace = overlapText.endsWith(' ') ? ' ' : '';
+          const leadingSpace = overlapText.match(/^\s+/) ? overlapText.match(/^\s+/)[0] : '';
+          const trailingSpace = overlapText.match(/\s+$/) ? overlapText.match(/\s+$/)[0] : '';
           newChunks.push({ text: leadingSpace + trimmedOverlapText + trailingSpace, pinned: !chunk.pinned });
 
           if (currentIndex + chunkLength > endIndex) {
@@ -170,8 +170,8 @@ export default defineComponent({
       while ((match = regex.exec(textContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
-        const leadingSpace = text.startsWith(' ') ? ' ' : '';
-        const trailingSpace = text.endsWith(' ') ? ' ' : '';
+        const leadingSpace = text.match(/^\s+/) ? text.match(/^\s+/)[0] : '';
+        const trailingSpace = text.match(/\s+$/) ? text.match(/\s+$/)[0] : '';
         const cleanedText = text.trim();
         newChunks.push({
           text: pinned ? leadingSpace + cleanedText.slice(2, -2) + trailingSpace : cleanedText,
@@ -191,8 +191,8 @@ export default defineComponent({
       while ((match = regex.exec(generatedContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
-        const leadingSpace = text.startsWith(' ') || pinned ? ' ' : '';
-        const trailingSpace = text.endsWith(' ') ? ' ' : '';
+        const leadingSpace = text.match(/^\s+/) ? text.match(/^\s+/)[0] : '';
+        const trailingSpace = text.match(/\s+$/) ? text.match(/\s+$/)[0] : '';
         const cleanedText = text.trim();
         newChunks.push({
           text: pinned ? leadingSpace + cleanedText.slice(2, -2) + trailingSpace : cleanedText,
