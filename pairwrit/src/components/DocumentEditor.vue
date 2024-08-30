@@ -144,8 +144,8 @@ export default defineComponent({
           const overlapEnd = Math.min(endIndex, currentIndex + chunkLength);
           const overlapText = chunk.text.slice(overlapStart - currentIndex, overlapEnd - currentIndex);
           const trimmedOverlapText = overlapText.trim();
-          const leadingSpace = overlapText.match(/^\s+/) ? overlapText.match(/^\s+/)[0] : '';
-          const trailingSpace = overlapText.match(/\s+$/) ? overlapText.match(/\s+$/)[0] : '';
+          const leadingSpace = overlapText && overlapText.match(/^\s+/) ? overlapText.match(/^\s+/)[0] : '';
+          const trailingSpace = overlapText && overlapText.match(/\s+$/) ? overlapText.match(/\s+$/)[0] : '';
           newChunks.push({ text: leadingSpace + trimmedOverlapText + trailingSpace, pinned: !chunk.pinned });
 
           if (currentIndex + chunkLength > endIndex) {
