@@ -13,53 +13,70 @@ app.use(cors());
 
 app.get('/api/generate', async (req, res) => {
   const prompt = req.query.prompt as string;
-  console.log('Received prompt:', prompt); // Debugging statement
+  console.log('Received prompt:', prompt);
 
   if (!prompt) {
     return res.status(400).send('Prompt is required');
   }
 
-  try {
-    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'Recreate this text to fit the new title, keeping the sections marked between ~< and >~ intact.'
-        },
-        {
-          role: 'user',
-          content: `Title:
+  let attempt = 0;
+  const maxRetries = 3;
+  let success = false;
+  let generatedContent = '';
+
+  while (attempt < maxRetries && !success) {
+    try {
+      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: 'ft:gpt-4o-mini-2024-07-18:personal:titleplusinput20240830:A1qhYIyX',
+        messages: [
+          {
+            role: 'system',
+            content: 'Recreate this text to fit the new title, keeping the sections marked between ~< and >~ intact.'
+          },
+          {
+            role: 'user',
+            content: `Title:
 "How to start a renewable energy business"
 Content:
 ${prompt}`
+          }
+        ],
+        "temperature": 0.7,
+        "max_tokens": 500
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
         }
-      ],
-      "temperature": 0.7,
-      "max_tokens": 500
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      });
+
+      generatedContent = response.data.choices[0].message.content;
+      console.log('Generated content:', generatedContent);
+
+      const inputPinnedText = extractPinnedText(prompt);
+      const outputPinnedText = extractPinnedText(generatedContent);
+
+      if (comparePinnedText(inputPinnedText, outputPinnedText)) {
+        success = true;
+      } else {
+        console.log('Pinned text was altered, retrying...');
+        attempt++;
       }
-    });
-
-    const generatedContent = response.data.choices[0].message.content;
-    const inputPinnedText = extractPinnedText(prompt);
-    const outputPinnedText = extractPinnedText(generatedContent);
-
-    if (!comparePinnedText(inputPinnedText, outputPinnedText)) {
-      return res.status(500).send('Pinned text was altered in the generated content');
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error calling OpenAI API:', error.response ? error.response.data : error.message);
+      } else {
+        console.error('Unexpected error:', error);
+      }
+      res.status(500).send('Error generating content');
+      return;
     }
+  }
 
+  if (success) {
     res.json({ content: generatedContent });
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      console.error('Error calling OpenAI API:', error.response ? error.response.data : error.message); // Detailed logging
-    } else {
-      console.error('Unexpected error:', error); // Handle unexpected errors
-    }
-    res.status(500).send('Error generating content');
+  } else {
+    res.status(500).send('Failed to generate valid content after multiple attempts');
   }
 });
 
