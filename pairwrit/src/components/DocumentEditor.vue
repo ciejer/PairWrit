@@ -185,10 +185,17 @@ export default defineComponent({
         const leadingSpace = leadingMatch ? leadingMatch[0] : '';
         const trailingSpace = trailingMatch ? trailingMatch[0] : '';
         const cleanedText = text.trim();
-        newChunks.push({
-          text: pinned ? leadingSpace + cleanedText.slice(2, -2) + trailingSpace : cleanedText,
-          pinned: pinned
-        });
+        if (pinned) {
+          newChunks.push({
+            text: leadingSpace + cleanedText.slice(2, -2) + trailingSpace,
+            pinned: true
+          });
+        } else {
+          newChunks.push({
+            text: cleanedText,
+            pinned: false
+          });
+        }
       }
 
       this.textChunks = newChunks;
