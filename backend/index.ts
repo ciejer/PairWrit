@@ -93,4 +93,4 @@ function comparePinnedText(inputPinnedText: string[], outputPinnedText: string[]
   return true;
 }
   console.log(`Server is running at http://localhost:3000`);
-});
+
