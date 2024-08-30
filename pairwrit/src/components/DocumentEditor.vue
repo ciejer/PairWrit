@@ -56,11 +56,13 @@ export default defineComponent({
       }
       this.loading = true;
       this.error = '';
-      const prompt = encodeURIComponent(this.encodeTextChunks());
+      const prompt = this.encodeTextChunks();
       try {
-        const response = await axios.get(`http://localhost:3000/api/generate?prompt=${prompt}`);
+        const response = await axios.get(`http://localhost:3000/api/generate`, {
+          params: { prompt }
+        });
         const generatedContent = response.data.content;
-        this.textChunks = this.mergeGeneratedContent(this.textChunks, generatedContent);
+        this.textChunks = this.mergeGeneratedContent(this.textChunks, generatedContent.trim());
         this.cleanupChunks();
         store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
         this.saveDocument();
