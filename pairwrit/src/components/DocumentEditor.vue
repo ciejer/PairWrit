@@ -142,8 +142,11 @@ export default defineComponent({
 
           const overlapStart = Math.max(startIndex, currentIndex);
           const overlapEnd = Math.min(endIndex, currentIndex + chunkLength);
-          const overlapText = chunk.text.slice(overlapStart - currentIndex, overlapEnd - currentIndex).trim();
-          newChunks.push({ text: overlapText, pinned: !chunk.pinned });
+          const overlapText = chunk.text.slice(overlapStart - currentIndex, overlapEnd - currentIndex);
+          const trimmedOverlapText = overlapText.trim();
+          const leadingSpace = overlapText.startsWith(' ') ? ' ' : '';
+          const trailingSpace = overlapText.endsWith(' ') ? ' ' : '';
+          newChunks.push({ text: leadingSpace + trimmedOverlapText + trailingSpace, pinned: !chunk.pinned });
 
           if (currentIndex + chunkLength > endIndex) {
             const after = chunk.text.slice(endIndex - currentIndex);
@@ -167,9 +170,11 @@ export default defineComponent({
       while ((match = regex.exec(textContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
+        const leadingSpace = text.startsWith(' ') ? ' ' : '';
+        const trailingSpace = text.endsWith(' ') ? ' ' : '';
         const cleanedText = text.trim();
         newChunks.push({
-          text: pinned ? cleanedText.slice(2, -2) : cleanedText,
+          text: pinned ? leadingSpace + cleanedText.slice(2, -2) + trailingSpace : cleanedText,
           pinned: pinned
         });
       }
@@ -186,9 +191,11 @@ export default defineComponent({
       while ((match = regex.exec(generatedContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
+        const leadingSpace = text.startsWith(' ') ? ' ' : '';
+        const trailingSpace = text.endsWith(' ') ? ' ' : '';
         const cleanedText = text.trim();
         newChunks.push({
-          text: pinned ? cleanedText.slice(2, -2) : cleanedText,
+          text: pinned ? leadingSpace + cleanedText.slice(2, -2) + trailingSpace : cleanedText,
           pinned: pinned
         });
       }
