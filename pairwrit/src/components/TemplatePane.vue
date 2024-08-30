@@ -11,7 +11,7 @@
   
   <script lang="ts">
   import { defineComponent } from 'vue';
-  import { saveDocument, loadDocument } from '../store';
+  import { mapActions } from 'vuex';
   
   export default defineComponent({
     data() {
@@ -25,6 +25,7 @@
       };
     },
     methods: {
+      ...mapActions(['saveDocument', 'loadDocument']),
       saveDocument() {
         saveDocument(this.documentContent);
       },

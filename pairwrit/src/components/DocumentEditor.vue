@@ -22,7 +22,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick } from 'vue';
+import { defineComponent, nextTick, getCurrentInstance } from 'vue';
 import { mapState, mapActions } from 'vuex';
 import axios from 'axios';
 
@@ -46,6 +46,9 @@ export default defineComponent({
   methods: {
     ...mapActions(['saveDocument', 'loadDocument']),
     async generateContent() {
+      const instance = getCurrentInstance();
+      if (!instance) return;
+      const store = instance.proxy.$store;
       const textContent = this.textChunks.map(chunk => chunk.text).join('');
       if (!textContent) {
         this.error = 'Document content is empty';
@@ -59,7 +62,7 @@ export default defineComponent({
         const generatedContent = response.data.content;
         this.textChunks = this.mergeGeneratedContent(this.textChunks, generatedContent);
         this.cleanupChunks();
-        this.$store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
+        store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
         this.saveDocument();
       } catch (error) {
         console.error('Error generating content:', error);
@@ -69,8 +72,11 @@ export default defineComponent({
       }
     },
     saveDocument() {
-      this.$store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
-      this.$store.dispatch('saveDocument');
+      const instance = getCurrentInstance();
+      if (!instance) return;
+      const store = instance.proxy.$store;
+      store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
+      store.dispatch('saveDocument');
     },
     handleSpacebar(event: KeyboardEvent) {
       const selection = window.getSelection();
@@ -205,7 +211,7 @@ export default defineComponent({
       const editableText = this.$el.querySelector('.editable-text');
       if (editableText) {
         const nodes = Array.from(editableText.childNodes);
-        const nodeIndex = nodes.findIndex(n => n.contains(node));
+        const nodeIndex = nodes.findIndex((n: Node) => n.contains(node));
         this.cursorPosition = { nodeIndex, offset };
       }
     },
@@ -218,15 +224,15 @@ export default defineComponent({
         if (editableText) {
           const nodes = Array.from(editableText.childNodes);
           const node = nodes[this.cursorPosition.nodeIndex];
-          if (node && node.nodeType === Node.TEXT_NODE) {
-            const offset = Math.min(this.cursorPosition.offset, node.textContent?.length || 0);
-            range.setStart(node, offset);
+          if (node && (node as Node).nodeType === Node.TEXT_NODE) {
+            const offset = Math.min(this.cursorPosition.offset, (node as Node).textContent?.length || 0);
+            range.setStart(node as Node, offset);
             range.collapse(true);
             selection.removeAllRanges();
             selection.addRange(range);
-          } else if (node && node.nodeType === Node.ELEMENT_NODE && node.firstChild) {
-            const offset = Math.min(this.cursorPosition.offset, node.firstChild.textContent?.length || 0);
-            range.setStart(node.firstChild, offset);
+          } else if (node && (node as Node).nodeType === Node.ELEMENT_NODE && (node as Node).firstChild) {
+            const offset = Math.min(this.cursorPosition.offset, (node as Node).firstChild?.textContent?.length || 0);
+            range.setStart((node as Node).firstChild as Node, offset);
             range.collapse(true);
             selection.removeAllRanges();
             selection.addRange(range);
