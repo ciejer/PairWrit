@@ -212,7 +212,7 @@ export default defineComponent({
         const pinned = text.startsWith('~<') && text.endsWith('>~');
         if (pinned) {
           newChunks.push({
-            text: `<span class="text-black">${text.slice(2, -2)}</span>`,
+            text: text.slice(2, -2),
             pinned: true
           });
         } else {
