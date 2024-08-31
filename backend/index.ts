@@ -27,18 +27,18 @@ app.get('/api/generate', async (req, res) => {
   while (attempt < maxRetries && !success) {
     try {
       const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'ft:gpt-4o-mini-2024-07-18:personal:titleplusinput20240830:A1qhYIyX',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'Recreate this text to fit the new title, keeping the sections marked between ~< and >~ intact.'
+            content: 'Recreate this text to fit the new title, keeping only the sections marked between ~< and >~ intact.'
           },
           {
             role: 'user',
             content: `Title:
-"How to start a renewable energy business"
-Content:
-${prompt}`
+            How to start a renewable energy business
+            Content:
+            ${prompt}`
           }
         ],
         "temperature": 0.7,
@@ -76,6 +76,7 @@ ${prompt}`
   if (success) {
     res.json({ content: generatedContent });
   } else {
+    console.log('Failed to generate valid content after multiple attempts');
     res.status(500).send('Failed to generate valid content after multiple attempts');
   }
 });
