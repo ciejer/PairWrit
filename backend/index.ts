@@ -26,9 +26,13 @@ app.post('/api/generate', async (req, res) => {
   let success = false;
   let generatedContent = '';
 
+  const presetMultiplier = 2;
+  let staticDiffAllowed = 100;
+  let percentDiffAllowed = 0.7;
+
   while (attempt < maxRetries && !success) {
     try {
-        // Assuming prompt is a JSON string
+      // Assuming prompt is a JSON string
       let user_prompt = JSON.stringify([{ title: "How to start a renewable energy business" }, ...prompt]);
       console.log('User prompt:', user_prompt);
       const response = await axios.post('https://api.openai.com/v1/chat/completions', {
@@ -63,11 +67,13 @@ app.post('/api/generate', async (req, res) => {
 
       const outputArray = JSON.parse(generatedContent);
 
-      if (comparePinnedText(JSON.parse(user_prompt), outputArray)) {
+      if (comparePinnedText(JSON.parse(user_prompt), outputArray, staticDiffAllowed, percentDiffAllowed)) {
         success = true;
       } else {
         console.log('Pinned text was altered, retrying...');
         attempt++;
+        staticDiffAllowed *= presetMultiplier;
+        percentDiffAllowed *= presetMultiplier;
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
@@ -114,7 +120,7 @@ function extractPinnedTextFromString(content: string): string[] {
  * Compares two arrays of content objects.
  * Returns true if the keys are in the same order and all placeholders are replaced by drafts.
  */
-function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: string; title?: string }>, outputArray: Array<{ draft?: string; pinned?: string; title?: string }>): boolean {
+function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: string; title?: string }>, outputArray: Array<{ draft?: string; pinned?: string; title?: string }>, staticDiffAllowed: number, percentDiffAllowed: number): boolean {
   console.log("input:", JSON.stringify(inputArray));
   console.log("output:", JSON.stringify(outputArray));
   if (inputArray.length !== outputArray.length) {
