@@ -59,7 +59,7 @@ export default defineComponent({
       this.error = '';
       try {
         console.log('Sending request to backend with prompt:', prompt);
-        const response = await axios.post('http://localhost:3000/api/generate', { prompt });
+        const response = await axios.post('http://localhost:3000/api/generate', prompt);
         console.log('API call made successfully');
         const generatedContent = response.data.content;
         console.log('Generated content:', generatedContent);
