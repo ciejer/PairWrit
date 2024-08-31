@@ -1,28 +1,26 @@
 <template>
-  <div class="p-4">
-    <div 
-      contenteditable="true" 
-      @keydown.space="handleSpacebar"
-      @input="updateTextContent"
-      class="editable-text p-2 border rounded"
-    >
-      <span v-for="(chunk, index) in textChunks" :key="index" :class="chunk.pinned ? 'text-black' : 'text-grey'">
-        {{ chunk.text }}
-      </span>
+  <div class="p-6 bg-gray-100 min-h-screen">
+    <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg overflow-hidden">
+      <Toolbar @generateContent="generateContent" />
+      <div 
+        contenteditable="true" 
+        @keydown.space="handleSpacebar"
+        @input="updateTextContent"
+        class="editable-text p-4 border-t border-gray-200"
+      >
+        <span v-for="(chunk, index) in textChunks" :key="index" :class="chunk.pinned ? 'text-black' : 'text-gray-500'">
+          {{ chunk.text }}
+        </span>
+      </div>
+      <div v-if="loading" class="p-4 text-blue-500">Generating content...</div>
+      <div v-if="error" class="p-4 text-red-500">{{ error }}</div>
     </div>
-    <button 
-      @click="generateContent" 
-      class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
-    >
-      Generate Content
-    </button>
-    <div v-if="loading" class="mt-2 text-blue-500">Generating content...</div>
-    <div v-if="error" class="mt-2 text-red-500">{{ error }}</div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, nextTick } from 'vue';
+import Toolbar from './Toolbar.vue';
 import { useStore } from 'vuex';
 import { mapState, mapActions } from 'vuex';
 import axios from 'axios';
