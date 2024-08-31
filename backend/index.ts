@@ -37,9 +37,10 @@ app.post('/api/generate', async (req, res) => {
           {
             role: 'system',
             content: `Populate this json array representing a document, replacing each "placeholder" character count with fully written "draft" text in the same place.
-            You must keep the "pinned" text as is.
+            You must keep the "pinned" text as is - do not even fix typos!
             The document (as shown by the draft and pinned sections together) should make sense and be coherent.
-            Each placeholder object should be replaced with a single draft object, and filled with text roughly the length of the placeholder integer.
+            Each placeholder object should be replaced with a single draft object, and filled with text of roughly the same character count given in the placeholder integer.
+            You must have no placeholder objects left after this draft!
             Example input: [{"title": "Expanding Market Reach"}, {"placeholder": 40}, {"pinned", "sustainability"}, {"placeholder": 25}, {"pinned", "reducing waste"}, {"placeholder": 5}, {"pinned", "conserving resources"}, {"placeholder": 17}, {"pinned", "recycling programs"}, {"placeholder": 5}, {"pinned", "energy-efficient"}, {"placeholder": 32}, {"pinned", "environmental impact"}, {"placeholder": 1}]
             Example output:[{"title": "Expanding Market Reach"}, {"draft": "Expanding market reach involves focusing on "}, {"pinned", "sustainability"}, {"draft": " initiatives. We should concentrate on "}, {"pinned", "reducing waste"}, {"draft": " and "}, {"pinned", "conserving resources"}, {"draft": " to appeal to eco-conscious consumers. By implementing "}, {"pinned", "recycling programs"}, {"draft": " and "}, {"pinned", "energy-efficient"}, {"draft": " practices, we can minimize our "}, {"pinned", "environmental impact"}, {"draft": "."}]`
           },
@@ -114,8 +115,8 @@ function extractPinnedTextFromString(content: string): string[] {
  * Returns true if the keys are in the same order and all placeholders are replaced by drafts.
  */
 function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: string; title?: string }>, outputArray: Array<{ draft?: string; pinned?: string; title?: string }>): boolean {
-  console.log("input:", JSON.stringify(inputArray))
-  console.log("output:", JSON.stringify(outputArray))
+  console.log("input:", JSON.stringify(inputArray));
+  console.log("output:", JSON.stringify(outputArray));
   if (inputArray.length !== outputArray.length) {
     console.error('Array lengths do not match');
     return false;
@@ -138,6 +139,22 @@ function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: st
     if (inputItem.placeholder && !outputItem.draft) {
       console.error(`Missing draft for placeholder at index ${i}`);
       return false;
+    }
+    let staticDiffAllowed = 100;
+    let percentDiffAllowed = 0.7;
+    if (inputItem.placeholder && outputItem.draft) {
+      console.log("% of length:", outputItem.draft.length * percentDiffAllowed);
+      console.log("Static diff allowed:", staticDiffAllowed);
+      console.log("Placeholder:", inputItem.placeholder);
+      console.log("Draft length:", outputItem.draft.length);
+      let maxDiffAllowed = Math.max(staticDiffAllowed, outputItem.draft.length * percentDiffAllowed);
+      console.log("Max diff allowed:", maxDiffAllowed);
+      let currentDiff = Math.abs(inputItem.placeholder - outputItem.draft.length);
+      console.log("Current diff:", currentDiff);
+      if (currentDiff > maxDiffAllowed) {
+        console.error(`Incorrect length ${outputItem.draft.length} for placeholder ${inputItem.placeholder} at index ${i}`);
+        return false;
+      }
     }
   }
 
