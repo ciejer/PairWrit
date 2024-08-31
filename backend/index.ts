@@ -28,22 +28,26 @@ app.post('/api/generate', async (req, res) => {
 
   while (attempt < maxRetries && !success) {
     try {
+      let user_prompt = `[{"title": "How to start a renewable energy business"}, ${prompt}]`
+      console.log('User prompt:', user_prompt);
       const response = await axios.post('https://api.openai.com/v1/chat/completions', {
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'Recreate this text to fit the new title, replacing "placeholder" with generated text as "unpinned" in the same place, and keeping the sections marked as "pinned" intact.'
+            content: `Populate this json array representing a document, replacing each "placeholder" character count with fully written "draft" text in the same place.
+            You must keep the "pinned" text as is.
+            The document (as shown by the draft and pinned sections together) should make sense and be coherent.
+            Each placeholder object should be replaced with the corresponding draft object, roughly the length of the placeholder integer.
+            Example input: [{"title": "Expanding Market Reach"}, {"placeholder": 40}, {"pinned", "sustainability"}, {"placeholder": 25}, {"pinned", "reducing waste"}, {"placeholder": 5}, {"pinned", "conserving resources"}, {"placeholder": 17}, {"pinned", "recycling programs"}, {"placeholder": 5}, {"pinned", "energy-efficient"}, {"placeholder": 32}, {"pinned", "environmental impact"}, {"placeholder": 1}]
+            Example output:[{"title": "Expanding Market Reach"}, {"draft": "Expanding market reach involves focusing on "}, {"pinned", "sustainability"}, {"draft": " initiatives. We should concentrate on "}, {"pinned", "reducing waste"}, {"draft": " and "}, {"pinned", "conserving resources"}, {"draft": " to appeal to eco-conscious consumers. By implementing "}, {"pinned", "recycling programs"}, {"draft": " and "}, {"pinned", "energy-efficient"}, {"draft": " practices, we can minimize our "}, {"pinned", "environmental impact"}, {"draft": "."}]`
           },
           {
             role: 'user',
-            content: `Title:
-            How to start a renewable energy business
-            Content:
-            ${prompt}`
+            content: user_prompt
           }
         ],
-        "temperature": 0.7,
+        "temperature": 0.5,
         "max_tokens": 500
       }, {
         headers: {
