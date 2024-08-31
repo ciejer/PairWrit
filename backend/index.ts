@@ -131,7 +131,7 @@ function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: st
       return false;
     }
 
-    if (inputItem.pinned && inputItem.pinned.trim() !== outputItem.pinned?.trim()) {
+    if (inputItem.pinned && normalizeWhitespace(inputItem.pinned) !== normalizeWhitespace(outputItem.pinned || '')) {
       console.error(`Pinned text mismatch at index ${i}: expected "${inputItem.pinned}", got "${outputItem.pinned}"`);
       return false;
     }
@@ -160,6 +160,13 @@ function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: st
 
   return true;
 }
+/**
+ * Normalizes whitespace in a string by replacing multiple spaces with a single space.
+ */
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
