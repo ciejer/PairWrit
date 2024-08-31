@@ -10,6 +10,7 @@ const app = express();
 const port = 3000;
 
 app.use(cors());
+app.use(express.json());
 
 app.post('/api/generate', async (req, res) => {
   console.log('Received req:', req);
