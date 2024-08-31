@@ -60,10 +60,9 @@ app.post('/api/generate', async (req, res) => {
       generatedContent = response.data.choices[0].message.content;
       console.log('Generated content:', generatedContent);
 
-      const inputPinnedText = extractPinnedTextFromArray(prompt);
-      const outputPinnedText = extractPinnedTextFromString(generatedContent);
+      const outputArray = JSON.parse(generatedContent);
 
-      if (comparePinnedText(inputPinnedText, outputPinnedText)) {
+      if (comparePinnedText(prompt, outputArray)) {
         success = true;
       } else {
         console.log('Pinned text was altered, retrying...');
