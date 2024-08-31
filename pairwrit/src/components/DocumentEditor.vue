@@ -154,10 +154,10 @@ export default defineComponent({
       this.cleanupChunks();
       this.saveCursorPosition();
     },
-    updateTextContent(event: Event) {
-      const textContent = (event.target as HTMLElement).innerText;
+    updateTextContent(event: InputEvent) {
+      const textContent = (event.target as HTMLElement).innerText.trim();
       const newChunks: TextChunk[] = [];
-      const regex = /(~<[^>]+>~|[^~]+)/g; // Regex to match pinned and non-pinned text
+      const regex = /(~<[^>]+>~|[^~]+?)(?=\s|$)/g; // Regex to match pinned and non-pinned text
       let match;
 
       while ((match = regex.exec(textContent)) !== null) {
