@@ -1,3 +1,4 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* Run `npx tailwindcss -i ./src/index.css -o ./src/output.css` to compile */
