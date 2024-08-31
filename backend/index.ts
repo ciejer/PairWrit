@@ -54,7 +54,7 @@ app.post('/api/generate', async (req, res) => {
       console.log('Generated content:', generatedContent);
 
       const inputPinnedText = extractPinnedTextFromArray(prompt);
-      const outputPinnedText = extractPinnedText(generatedContent);
+      const outputPinnedText = extractPinnedTextFromString(generatedContent);
 
       if (comparePinnedText(inputPinnedText, outputPinnedText)) {
         success = true;
@@ -88,6 +88,19 @@ function extractPinnedTextFromArray(contentArray: Array<{ placeholder?: number; 
   return contentArray
     .filter(item => item.pinned)
     .map(item => item.pinned!.trim());
+}
+
+/**
+ * Extracts pinned text from the given string content.
+ */
+function extractPinnedTextFromString(content: string): string[] {
+  const regex = /~<([^>]+)>~/g;
+  const pinnedText: string[] = [];
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    pinnedText.push(match[1].trim());
+  }
+  return pinnedText;
 }
 
 /**
