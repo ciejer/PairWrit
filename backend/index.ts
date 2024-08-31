@@ -132,7 +132,7 @@ function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: st
     }
 
     if (inputItem.pinned && normalizeWhitespace(inputItem.pinned) !== normalizeWhitespace(outputItem.pinned || '')) {
-      console.error(`Pinned text mismatch at index ${i}: expected "${inputItem.pinned}", got "${outputItem.pinned}"`);
+      console.error(`Pinned text mismatch at index ${i}: expected "${normalizeWhitespace(inputItem.pinned)}", got "${normalizeWhitespace(outputItem.pinned || '')}"`);
       return false;
     }
 

@@ -1,0 +1,1 @@
+To run, use `npx ts-node index.ts`.
