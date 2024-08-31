@@ -14,7 +14,7 @@ app.use(express.json());
 
 app.post('/api/generate', async (req, res) => {
   console.log('Received req:', req);
-  const prompt = req.body as Array<{ placeholder?: number; pinned?: string; unpinned?: string }>;
+  const prompt = req.body as Array<{ placeholder?: number; pinned?: string; title?: string }>;
   console.log('Received prompt:', JSON.stringify(prompt));
 
   if (!prompt) {
@@ -91,7 +91,7 @@ app.post('/api/generate', async (req, res) => {
 /**
  * Extracts pinned text from the given array of content objects.
  */
-function extractPinnedTextFromArray(contentArray: Array<{ placeholder?: number; pinned?: string; unpinned?: string }>): string[] {
+function extractPinnedTextFromArray(contentArray: Array<{ placeholder?: number; pinned?: string; title?: string }>): string[] {
   return contentArray
     .filter(item => item.pinned)
     .map(item => item.pinned!.trim());
@@ -114,7 +114,7 @@ function extractPinnedTextFromString(content: string): string[] {
  * Compares two arrays of content objects.
  * Returns true if the keys are in the same order and all placeholders are replaced by drafts.
  */
-function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: string; unpinned?: string }>, outputArray: Array<{ draft?: string; pinned?: string; title?: string }>): boolean {
+function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: string; title?: string }>, outputArray: Array<{ draft?: string; pinned?: string; title?: string }>): boolean {
   if (inputArray.length !== outputArray.length) {
     return false;
   }
