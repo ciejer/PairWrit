@@ -62,7 +62,7 @@ app.post('/api/generate', async (req, res) => {
 
       const outputArray = JSON.parse(generatedContent);
 
-      if (comparePinnedText(prompt, outputArray)) {
+      if (comparePinnedText(JSON.parse(user_prompt), outputArray)) {
         success = true;
       } else {
         console.log('Pinned text was altered, retrying...');
@@ -114,6 +114,8 @@ function extractPinnedTextFromString(content: string): string[] {
  * Returns true if the keys are in the same order and all placeholders are replaced by drafts.
  */
 function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: string; title?: string }>, outputArray: Array<{ draft?: string; pinned?: string; title?: string }>): boolean {
+  console.log("input:", JSON.stringify(inputArray))
+  console.log("output:", JSON.stringify(outputArray))
   if (inputArray.length !== outputArray.length) {
     console.error('Array lengths do not match');
     return false;
