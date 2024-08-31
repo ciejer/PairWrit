@@ -12,6 +12,7 @@ const port = 3000;
 app.use(cors());
 
 app.post('/api/generate', async (req, res) => {
+  console.log('Received req:', req);
   const prompt = req.body as Array<{ placeholder?: number; pinned?: string; unpinned?: string }>;
   console.log('Received prompt:', prompt);
 
