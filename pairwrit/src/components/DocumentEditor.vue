@@ -158,18 +158,20 @@ export default defineComponent({
     updateTextContent(event: InputEvent) {
       this.saveCursorPosition(); // Save cursor position before updating text
       const textContent = (event.target as HTMLElement).innerText;
-      let currentIndex = 0;
       const newChunks: TextChunk[] = [];
+      let currentIndex = 0;
 
       for (const chunk of this.textChunks) {
         const chunkLength = chunk.text.length;
         const newText = textContent.slice(currentIndex, currentIndex + chunkLength);
 
-        if (newText.length > 0) {
-          newChunks.push({ text: newText, pinned: chunk.pinned });
+        if (chunk.pinned) {
+          newChunks.push({ text: chunk.text, pinned: true });
+          currentIndex += chunkLength;
+        } else if (newText.length > 0) {
+          newChunks.push({ text: newText, pinned: false });
+          currentIndex += newText.length;
         }
-
-        currentIndex += chunkLength;
       }
 
       this.textChunks = newChunks;
