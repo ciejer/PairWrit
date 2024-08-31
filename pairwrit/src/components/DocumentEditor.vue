@@ -160,15 +160,18 @@ export default defineComponent({
       const textContent = (event.target as HTMLElement).innerText;
       const newChunks: TextChunk[] = [];
       let currentIndex = 0;
+      let previousLength = this.textChunks.reduce((sum, chunk) => sum + chunk.text.length, 0);
+      let newLength = textContent.length;
+      let lengthDifference = newLength - previousLength;
 
       for (const chunk of this.textChunks) {
         const chunkLength = chunk.text.length;
-        const newText = textContent.slice(currentIndex, currentIndex + chunkLength);
 
         if (chunk.pinned) {
           newChunks.push({ text: chunk.text, pinned: true });
           currentIndex += chunkLength;
         } else {
+          const newText = textContent.slice(currentIndex, currentIndex + chunkLength + lengthDifference);
           newChunks.push({ text: newText, pinned: false });
           currentIndex += newText.length;
         }
