@@ -50,7 +50,7 @@ app.post('/api/generate', async (req, res) => {
           }
         ],
         "temperature": 0.5,
-        "max_tokens": 500
+        "max_tokens": 4000
       }, {
         headers: {
           'Content-Type': 'application/json',
