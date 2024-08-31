@@ -31,6 +31,9 @@ interface TextChunk {
 }
 
 export default defineComponent({
+  components: {
+    Toolbar
+  },
   data() {
     return {
       loading: false,
