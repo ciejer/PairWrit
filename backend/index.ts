@@ -131,7 +131,7 @@ function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: st
       return false;
     }
 
-    if (inputItem.pinned && inputItem.pinned !== outputItem.pinned) {
+    if (inputItem.pinned && inputItem.pinned.trim() !== outputItem.pinned?.trim()) {
       console.error(`Pinned text mismatch at index ${i}: expected "${inputItem.pinned}", got "${outputItem.pinned}"`);
       return false;
     }
