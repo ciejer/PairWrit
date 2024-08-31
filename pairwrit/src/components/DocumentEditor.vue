@@ -157,25 +157,20 @@ export default defineComponent({
     updateTextContent(event: InputEvent) {
       const textContent = (event.target as HTMLElement).innerText.trim();
       const newChunks: TextChunk[] = [];
-      const regex = /(~<[^>]+>~|[^~]+?)(?=\s|$)/g; // Regex to match pinned and non-pinned text
+      const regex = /(~<[^>]+>~|\S+|\s+)/g; // Regex to match pinned, non-pinned text, and spaces
       let match;
 
       while ((match = regex.exec(textContent)) !== null) {
         const text = match[0];
         const pinned = text.startsWith('~<') && text.endsWith('>~');
-        const leadingMatch = text ? text.match(/^\s+/) : null;
-        const trailingMatch = text ? text.match(/\s+$/) : null;
-        const leadingSpace = leadingMatch ? leadingMatch[0] : '';
-        const trailingSpace = trailingMatch ? trailingMatch[0] : '';
-        const cleanedText = text.trim();
         if (pinned) {
           newChunks.push({
-            text: leadingSpace + cleanedText.slice(2, -2) + trailingSpace,
+            text: text.slice(2, -2),
             pinned: true
           });
         } else {
           newChunks.push({
-            text: cleanedText,
+            text: text,
             pinned: false
           });
         }
