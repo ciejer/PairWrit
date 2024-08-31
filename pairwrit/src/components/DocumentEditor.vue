@@ -160,19 +160,14 @@ export default defineComponent({
       this.store.commit('setDocumentContent', textContent);
       this.saveDocument();
     },
-    mergeGeneratedContent(chunks: TextChunk[], generatedContent: Array<{ placeholder?: number; unpinned?: string; pinned?: string }>): TextChunk[] {
+    mergeGeneratedContent(chunks: TextChunk[], generatedContent: Array<{ title?: string; draft?: string; pinned?: string }>): TextChunk[] {
       const newChunks: TextChunk[] = [];
-      let generatedIndex = 0;
 
-      chunks.forEach(chunk => {
-        if (chunk.pinned) {
-          newChunks.push(chunk);
-        } else {
-          const generatedChunk = generatedContent[generatedIndex];
-          if (generatedChunk.unpinned) {
-            newChunks.push({ text: generatedChunk.unpinned, pinned: false });
-            generatedIndex++;
-          }
+      generatedContent.forEach(content => {
+        if (content.pinned) {
+          newChunks.push({ text: content.pinned, pinned: true });
+        } else if (content.draft) {
+          newChunks.push({ text: content.draft, pinned: false });
         }
       });
 
