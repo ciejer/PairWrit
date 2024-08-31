@@ -157,8 +157,22 @@ export default defineComponent({
     },
     updateTextContent(event: InputEvent) {
       const textContent = (event.target as HTMLElement).innerText;
-      this.textChunks = [{ text: textContent, pinned: false }];
-      this.store.commit('setDocumentContent', textContent);
+      let currentIndex = 0;
+      const newChunks: TextChunk[] = [];
+
+      for (const chunk of this.textChunks) {
+        const chunkLength = chunk.text.length;
+        const newText = textContent.slice(currentIndex, currentIndex + chunkLength);
+
+        if (newText.length > 0) {
+          newChunks.push({ text: newText, pinned: chunk.pinned });
+        }
+
+        currentIndex += chunkLength;
+      }
+
+      this.textChunks = newChunks;
+      this.store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
       this.saveDocument();
     },
     mergeGeneratedContent(chunks: TextChunk[], generatedContent: string): TextChunk[] {
