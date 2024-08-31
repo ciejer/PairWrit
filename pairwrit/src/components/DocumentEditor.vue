@@ -1,14 +1,14 @@
 <template>
   <div class="p-6 bg-gray-100 min-h-screen">
     <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg overflow-hidden">
-      <!-- <Toolbar @generateContent="generateContent" /> -->
+      <Toolbar @generateContent="generateContent" />
       <div 
         contenteditable="true" 
         @keydown.space="handleSpacebar"
         @input="updateTextContent"
         class="editable-text p-4 border-t border-gray-200"
       >
-        <span v-for="(chunk, index) in textChunks" :key="index" :class="chunk.pinned ? 'text-black' : 'text-gray-500'">
+        <span v-for="(chunk, index) in textChunks" :key="index" :class="chunk.pinned ? 'text-black' : 'text-grey'">
           {{ chunk.text }}
         </span>
       </div>
