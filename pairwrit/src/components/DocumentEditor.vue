@@ -157,23 +157,15 @@ export default defineComponent({
     updateTextContent(event: InputEvent) {
       const textContent = (event.target as HTMLElement).innerText.trim();
       const newChunks: TextChunk[] = [];
-      const regex = /(~<[^>]+>~|\S+|\s+)/g; // Regex to match pinned, non-pinned text, and spaces
+      const regex = /(\S+|\s+)/g; // Regex to match non-pinned text and spaces
       let match;
 
       while ((match = regex.exec(textContent)) !== null) {
         const text = match[0];
-        const pinned = text.startsWith('~<') && text.endsWith('>~');
-        if (pinned) {
-          newChunks.push({
-            text: text.slice(2, -2),
-            pinned: true
-          });
-        } else {
-          newChunks.push({
-            text: text,
-            pinned: false
-          });
-        }
+        newChunks.push({
+          text: text,
+          pinned: false
+        });
       }
 
       this.textChunks = newChunks;
