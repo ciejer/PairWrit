@@ -1,7 +1,7 @@
 <template>
   <div class="p-6 bg-gray-100 min-h-screen">
     <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg overflow-hidden">
-      <Toolbar @generateContent="generateContent" />
+      <!-- <Toolbar @generateContent="generateContent" /> -->
       <div 
         contenteditable="true" 
         @keydown.space="handleSpacebar"
