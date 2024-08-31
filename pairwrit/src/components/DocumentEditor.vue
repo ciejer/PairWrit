@@ -162,14 +162,17 @@ export default defineComponent({
       let currentIndex = 0;
 
       for (const chunk of this.textChunks) {
-        const chunkLength = chunk.text.length;
-        const newText = textContent.slice(currentIndex, currentIndex + chunkLength);
-
         if (chunk.pinned) {
           newChunks.push({ text: chunk.text, pinned: true });
-          currentIndex += chunkLength;
+          currentIndex += chunk.text.length;
         } else {
-          newChunks.push({ text: newText, pinned: false });
+          const nextPinnedIndex = this.textChunks.findIndex((c, i) => i > currentIndex && c.pinned);
+          const nextPinnedPosition = nextPinnedIndex !== -1 ? this.textChunks[nextPinnedIndex].text.length : textContent.length;
+          const newText = textContent.slice(currentIndex, nextPinnedPosition);
+
+          if (newText.length > 0) {
+            newChunks.push({ text: newText, pinned: false });
+          }
           currentIndex += newText.length;
         }
       }
