@@ -31,7 +31,7 @@ app.get('/api/generate', async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: 'Recreate this text to fit the new title, keeping only the sections marked between ~< and >~ intact.'
+            content: 'Recreate this text to fit the new title, replacing "placeholder" with generated text as "unpinned" in the same place, and keeping only the sections marked between ~< and >~ intact.'
           },
           {
             role: 'user',

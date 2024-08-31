@@ -57,12 +57,12 @@ export default defineComponent({
       }
       this.loading = true;
       this.error = '';
-      const prompt = this.encodeTextChunks();
+      const prompt = JSON.stringify(this.encodeTextChunks());
       console.log('Encoded prompt:', prompt);
       try {
         console.log('Sending request to backend with prompt:', prompt);
-        const response = await axios.get('http://localhost:3000/api/generate', {
-          params: { prompt }
+        const response = await axios.post('http://localhost:3000/api/generate', {
+          prompt
         });
         console.log('API call made successfully');
         const generatedContent = response.data.content;
@@ -189,28 +189,22 @@ export default defineComponent({
       this.cleanupChunks();
       this.saveCursorPosition();
     },
-    mergeGeneratedContent(chunks: TextChunk[], generatedContent: string): TextChunk[] {
+    mergeGeneratedContent(chunks: TextChunk[], generatedContent: Array<{ placeholder?: number; unpinned?: string; pinned?: string }>): TextChunk[] {
       const newChunks: TextChunk[] = [];
-      const regex = /(~<[^>]+>~|[^~]+)/g;
-      let match;
+      let generatedIndex = 0;
 
-      while ((match = regex.exec(generatedContent)) !== null) {
-        const text = match[0];
-        const pinned = text.startsWith('~<') && text.endsWith('>~');
-        if (pinned) {
-          newChunks.push({
-            text: text.slice(2, -2),
-            pinned: true
-          });
+      chunks.forEach(chunk => {
+        if (chunk.pinned) {
+          newChunks.push(chunk);
         } else {
-          newChunks.push({
-            text: text,
-            pinned: false
-          });
+          const generatedChunk = generatedContent[generatedIndex];
+          if (generatedChunk.unpinned) {
+            newChunks.push({ text: generatedChunk.unpinned, pinned: false });
+            generatedIndex++;
+          }
         }
-      }
+      });
 
-      console.log('New chunks after merging:', newChunks);
       return newChunks;
     },
     saveCursorPosition() {
@@ -253,15 +247,27 @@ export default defineComponent({
         }
       });
     },
-    encodeTextChunks(): string {
-      return this.textChunks.map(chunk => {
-        const leadingMatch = chunk.text.match(/^\s+/);
-        const trailingMatch = chunk.text.match(/\s+$/);
-        const leadingSpace = leadingMatch ? leadingMatch[0] : '';
-        const trailingSpace = trailingMatch ? trailingMatch[0] : '';
-        const cleanedText = chunk.text.trim();
-        return chunk.pinned ? `${leadingSpace}~<${cleanedText}>~${trailingSpace}` : chunk.text;
-      }).join('');
+    encodeTextChunks(): Array<{ placeholder?: number; pinned?: string }> {
+      const encodedChunks: Array<{ placeholder?: number; pinned?: string }> = [];
+      let unpinnedTextLength = 0;
+
+      this.textChunks.forEach(chunk => {
+        if (chunk.pinned) {
+          if (unpinnedTextLength > 0) {
+            encodedChunks.push({ placeholder: unpinnedTextLength });
+            unpinnedTextLength = 0;
+          }
+          encodedChunks.push({ pinned: chunk.text });
+        } else {
+          unpinnedTextLength += chunk.text.length;
+        }
+      });
+
+      if (unpinnedTextLength > 0) {
+        encodedChunks.push({ placeholder: unpinnedTextLength });
+      }
+
+      return encodedChunks;
     },
     cleanupChunks() {
       let cleanedChunks: TextChunk[] = [];
