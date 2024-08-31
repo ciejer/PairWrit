@@ -49,21 +49,17 @@ export default defineComponent({
     ...mapActions(['saveDocument', 'loadDocument']),
     async generateContent() {
       console.log('Generate Content button clicked');
-      const textContent = this.textChunks.map(chunk => chunk.text).join('');
-      console.log('Text content:', textContent);
-      if (!textContent) {
+      const prompt = this.encodeTextChunks();
+      console.log('Encoded prompt:', prompt);
+      if (prompt.length === 0) {
         this.error = 'Document content is empty';
         return;
       }
       this.loading = true;
       this.error = '';
-      const prompt = JSON.stringify(this.encodeTextChunks());
-      console.log('Encoded prompt:', prompt);
       try {
         console.log('Sending request to backend with prompt:', prompt);
-        const response = await axios.post('http://localhost:3000/api/generate', {
-          prompt
-        });
+        const response = await axios.post('http://localhost:3000/api/generate', prompt);
         console.log('API call made successfully');
         const generatedContent = response.data.content;
         console.log('Generated content:', generatedContent);

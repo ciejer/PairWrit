@@ -11,8 +11,8 @@ const port = 3000;
 
 app.use(cors());
 
-app.get('/api/generate', async (req, res) => {
-  const prompt = req.query.prompt as string;
+app.post('/api/generate', async (req, res) => {
+  const prompt = req.body as Array<{ placeholder?: number; pinned?: string }>;
   console.log('Received prompt:', prompt);
 
   if (!prompt) {
@@ -31,7 +31,7 @@ app.get('/api/generate', async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: 'Recreate this text to fit the new title, replacing "placeholder" with generated text as "unpinned" in the same place, and keeping only the sections marked between ~< and >~ intact.'
+            content: 'Recreate this text to fit the new title, replacing "placeholder" with generated text as "unpinned" in the same place, and keeping the sections marked as "pinned" intact.'
           },
           {
             role: 'user',
