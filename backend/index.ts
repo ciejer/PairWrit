@@ -146,8 +146,6 @@ function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: st
       console.error(`Missing draft for placeholder at index ${i}`);
       return false;
     }
-    let staticDiffAllowed = 100;
-    let percentDiffAllowed = 0.7;
     if (inputItem.placeholder && outputItem.draft) {
       console.log("% of length:", outputItem.draft.length * percentDiffAllowed);
       console.log("Static diff allowed:", staticDiffAllowed);
