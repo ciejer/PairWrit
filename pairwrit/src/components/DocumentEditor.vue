@@ -160,10 +160,11 @@ export default defineComponent({
       this.store.commit('setDocumentContent', textContent);
       this.saveDocument();
     },
-    mergeGeneratedContent(chunks: TextChunk[], generatedContent: Array<{ title?: string; draft?: string; pinned?: string }>): TextChunk[] {
+    mergeGeneratedContent(chunks: TextChunk[], generatedContent: string): TextChunk[] {
+      const parsedContent = JSON.parse(generatedContent);
       const newChunks: TextChunk[] = [];
 
-      generatedContent.forEach(content => {
+      parsedContent.forEach(content => {
         if (content.pinned) {
           newChunks.push({ text: content.pinned, pinned: true });
         } else if (content.draft) {
