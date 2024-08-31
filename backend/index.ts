@@ -111,18 +111,31 @@ function extractPinnedTextFromString(content: string): string[] {
 }
 
 /**
- * Compares two arrays of pinned text.
- * Returns true if they are identical, false otherwise.
+ * Compares two arrays of content objects.
+ * Returns true if the keys are in the same order and all placeholders are replaced by drafts.
  */
-function comparePinnedText(inputPinnedText: string[], outputPinnedText: string[]): boolean {
-  if (inputPinnedText.length !== outputPinnedText.length) {
+function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: string; unpinned?: string }>, outputArray: Array<{ draft?: string; pinned?: string; title?: string }>): boolean {
+  if (inputArray.length !== outputArray.length) {
     return false;
   }
-  for (let i = 0; i < inputPinnedText.length; i++) {
-    if (inputPinnedText[i] !== outputPinnedText[i]) {
+
+  for (let i = 0; i < inputArray.length; i++) {
+    const inputItem = inputArray[i];
+    const outputItem = outputArray[i];
+
+    if (inputItem.title && inputItem.title !== outputItem.title) {
+      return false;
+    }
+
+    if (inputItem.pinned && inputItem.pinned !== outputItem.pinned) {
+      return false;
+    }
+
+    if (inputItem.placeholder && !outputItem.draft) {
       return false;
     }
   }
+
   return true;
 }
 app.listen(port, () => {
