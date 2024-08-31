@@ -115,6 +115,7 @@ function extractPinnedTextFromString(content: string): string[] {
  */
 function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: string; title?: string }>, outputArray: Array<{ draft?: string; pinned?: string; title?: string }>): boolean {
   if (inputArray.length !== outputArray.length) {
+    console.error('Array lengths do not match');
     return false;
   }
 
@@ -123,14 +124,17 @@ function comparePinnedText(inputArray: Array<{ placeholder?: number; pinned?: st
     const outputItem = outputArray[i];
 
     if (inputItem.title && inputItem.title !== outputItem.title) {
+      console.error(`Title mismatch at index ${i}: expected "${inputItem.title}", got "${outputItem.title}"`);
       return false;
     }
 
     if (inputItem.pinned && inputItem.pinned !== outputItem.pinned) {
+      console.error(`Pinned text mismatch at index ${i}: expected "${inputItem.pinned}", got "${outputItem.pinned}"`);
       return false;
     }
 
     if (inputItem.placeholder && !outputItem.draft) {
+      console.error(`Missing draft for placeholder at index ${i}`);
       return false;
     }
   }
