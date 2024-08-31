@@ -12,7 +12,7 @@ const port = 3000;
 app.use(cors());
 
 app.post('/api/generate', async (req, res) => {
-  const prompt = req.body as Array<{ placeholder?: number; pinned?: string }>;
+  const prompt = req.body as Array<{ placeholder?: number; pinned?: string; unpinned?: string }>;
   console.log('Received prompt:', prompt);
 
   if (!prompt) {
@@ -53,7 +53,7 @@ app.post('/api/generate', async (req, res) => {
       generatedContent = response.data.choices[0].message.content;
       console.log('Generated content:', generatedContent);
 
-      const inputPinnedText = extractPinnedText(prompt);
+      const inputPinnedText = extractPinnedTextFromArray(prompt);
       const outputPinnedText = extractPinnedText(generatedContent);
 
       if (comparePinnedText(inputPinnedText, outputPinnedText)) {
@@ -82,17 +82,12 @@ app.post('/api/generate', async (req, res) => {
 });
 
 /**
- * Extracts pinned text from the given content.
- * Pinned text is denoted by ~< and >~.
+ * Extracts pinned text from the given array of content objects.
  */
-function extractPinnedText(content: string): string[] {
-  const regex = /~<([^>]+)>~/g;
-  const pinnedText: string[] = [];
-  let match;
-  while ((match = regex.exec(content)) !== null) {
-    pinnedText.push(match[1].trim());
-  }
-  return pinnedText;
+function extractPinnedTextFromArray(contentArray: Array<{ placeholder?: number; pinned?: string; unpinned?: string }>): string[] {
+  return contentArray
+    .filter(item => item.pinned)
+    .map(item => item.pinned!.trim());
 }
 
 /**
