@@ -155,20 +155,8 @@ export default defineComponent({
       this.saveCursorPosition();
     },
     updateTextContent(event: InputEvent) {
-      const textContent = (event.target as HTMLElement).innerText.trim();
-      const newChunks: TextChunk[] = [];
-      const regex = /(\S+|\s+)/g; // Regex to match non-pinned text and spaces
-      let match;
-
-      while ((match = regex.exec(textContent)) !== null) {
-        const text = match[0];
-        newChunks.push({
-          text: text,
-          pinned: false
-        });
-      }
-
-      this.textChunks = newChunks;
+      const textContent = (event.target as HTMLElement).innerText;
+      this.textChunks = [{ text: textContent, pinned: false }];
       this.cleanupChunks();
       this.saveCursorPosition();
     },
