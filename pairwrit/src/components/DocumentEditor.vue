@@ -164,7 +164,7 @@ export default defineComponent({
       const parsedContent = JSON.parse(generatedContent);
       const newChunks: TextChunk[] = [];
 
-      parsedContent.forEach(content => {
+      parsedContent.forEach((content: any) => {
         if (content.pinned) {
           newChunks.push({ text: content.pinned, pinned: true });
         } else if (content.draft) {
