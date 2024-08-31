@@ -28,7 +28,8 @@ app.post('/api/generate', async (req, res) => {
 
   while (attempt < maxRetries && !success) {
     try {
-      let user_prompt = `[{"title": "How to start a renewable energy business"}, ${prompt}]`
+        // Assuming prompt is a JSON string
+      let user_prompt = JSON.stringify([{ title: "How to start a renewable energy business" }, ...prompt]);
       console.log('User prompt:', user_prompt);
       const response = await axios.post('https://api.openai.com/v1/chat/completions', {
         model: 'gpt-4o-mini',
