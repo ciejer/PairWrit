@@ -157,8 +157,8 @@ export default defineComponent({
     updateTextContent(event: InputEvent) {
       const textContent = (event.target as HTMLElement).innerText;
       this.textChunks = [{ text: textContent, pinned: false }];
-      this.cleanupChunks();
-      this.saveCursorPosition();
+      this.store.commit('setDocumentContent', textContent);
+      this.saveDocument();
     },
     mergeGeneratedContent(chunks: TextChunk[], generatedContent: Array<{ placeholder?: number; unpinned?: string; pinned?: string }>): TextChunk[] {
       const newChunks: TextChunk[] = [];
