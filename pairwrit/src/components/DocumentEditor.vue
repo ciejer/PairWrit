@@ -156,6 +156,7 @@ export default defineComponent({
       this.saveCursorPosition();
     },
     updateTextContent(event: InputEvent) {
+      this.saveCursorPosition(); // Save cursor position before updating text
       const textContent = (event.target as HTMLElement).innerText;
       let currentIndex = 0;
       const newChunks: TextChunk[] = [];
@@ -174,6 +175,7 @@ export default defineComponent({
       this.textChunks = newChunks;
       this.store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
       this.saveDocument();
+      this.restoreCursorPosition(); // Restore cursor position after updating text
     },
     mergeGeneratedContent(chunks: TextChunk[], generatedContent: string): TextChunk[] {
       const parsedContent = JSON.parse(generatedContent);
