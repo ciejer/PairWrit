@@ -108,13 +108,13 @@ export default defineComponent({
         const sentence = sentences[i];
         const sentenceLength = sentence.length;
 
-        if (currentIndex <= range.startOffset && currentIndex + sentenceLength >= range.startOffset) {
+        if (currentIndex <= range.startOffset && currentIndex + sentenceLength > range.startOffset) {
           startSentenceIndex = i;
         }
         if (currentIndex <= range.endOffset && currentIndex + sentenceLength >= range.endOffset) {
           endSentenceIndex = i;
         }
-        currentIndex += sentenceLength;
+        currentIndex += sentenceLength + 1; // Adjust for the separator
       }
 
       if (startSentenceIndex === -1 || endSentenceIndex === -1) return;
