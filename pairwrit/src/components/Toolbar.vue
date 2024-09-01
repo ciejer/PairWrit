@@ -2,7 +2,8 @@
   <div class="bg-blue-600 text-white p-4 flex justify-between items-center shadow-md">
     <h1 class="text-lg font-bold">Document Editor</h1>
     <input 
-      v-model="title"
+      v-model="localTitle"
+      @input="updateTitle"
       type="text" 
       placeholder="Enter title here" 
       class="px-4 py-2 mr-4 bg-white text-blue-600 rounded shadow"
@@ -27,9 +28,19 @@ export default defineComponent({
     }
   },
   emits: ['updateTitle', 'generateContent'],
+  data() {
+    return {
+      localTitle: this.title
+    };
+  },
   watch: {
     title(newTitle) {
-      this.$emit('updateTitle', newTitle);
+      this.localTitle = newTitle;
+    }
+  },
+  methods: {
+    updateTitle() {
+      this.$emit('updateTitle', this.localTitle);
     }
   }
 });
