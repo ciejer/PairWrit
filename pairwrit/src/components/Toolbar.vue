@@ -40,6 +40,7 @@ export default defineComponent({
   },
   methods: {
     updateTitle() {
+      console.log('Emitting title:', this.localTitle); // Debugging line
       this.$emit('updateTitle', this.localTitle);
     }
   }

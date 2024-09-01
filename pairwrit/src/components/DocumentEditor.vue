@@ -236,6 +236,7 @@ export default defineComponent({
     };
 
     const updateTitle = (newTitle: string) => {
+      console.log('Received title:', newTitle); // Debugging line
       title.value = newTitle;
       console.log('Title updated:', title.value); // Debugging line to check if title is updated
     };
