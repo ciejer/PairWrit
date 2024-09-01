@@ -27,7 +27,7 @@ export default defineComponent({
       required: true
     }
   },
-  emits: ['updateTitle', 'generateContent'],
+  emits: ['update-title', 'generateContent'],
   data() {
     return {
       localTitle: this.title
@@ -41,7 +41,7 @@ export default defineComponent({
   methods: {
     updateTitle() {
       console.log('Emitting title:', this.localTitle); // Debugging line
-      this.$emit('updateTitle', this.localTitle);
+      this.$emit('update-title', this.localTitle);
     }
   }
 });
