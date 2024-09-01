@@ -3,15 +3,13 @@
     <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg overflow-hidden">
       <Toolbar @generateContent="generateContent" />
       <div 
+        ref="editableDiv"
         contenteditable="true" 
-        @keydown.space="handleSpacebar"
-        @input="updateTextContent"
+        @input="updateContent"
+        @keydown.space.prevent="handleSpace"
+        @click="handleClick"
         class="editable-text p-4 border-t border-gray-200"
-      >
-        <span v-for="(chunk, index) in textChunks" :key="index" :class="chunk.pinned ? 'text-black' : 'text-grey'">
-          {{ chunk.text }}
-        </span>
-      </div>
+      ></div>
       <div v-if="loading" class="p-4 text-blue-500">Generating content...</div>
       <div v-if="error" class="p-4 text-red-500">{{ error }}</div>
     </div>
@@ -19,243 +17,375 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick } from 'vue';
+import { defineComponent, ref, onMounted } from 'vue';
 import Toolbar from './Toolbar.vue';
 import { useStore } from 'vuex';
-import { mapState, mapActions } from 'vuex';
 import axios from 'axios';
 
-interface TextChunk {
-  text: string;
-  pinned: boolean;
+interface ApiChunk {
+  draft?: string;
+  pinned?: string;
+  placeholder?: number;
+  unpinned?: string;
 }
 
 export default defineComponent({
-  components: {
-    Toolbar
-  },
-  data() {
+  components: { Toolbar },
+  setup() {
+    const store = useStore();
+    const editableDiv = ref<HTMLElement | null>(null);
+    const content = ref('');
+    const loading = ref(false);
+    const error = ref('');
+
+    let clickCount = 0;
+    let lastClickTime = 0;
+
+    const updateContent = () => {
+      if (!editableDiv.value) return;
+      cleanupEmptyStrikes();
+      content.value = editableDiv.value.innerHTML;
+      store.commit('setDocumentContent', content.value);
+    };
+
+    const handleSpace = (event: KeyboardEvent) => {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) {
+        // If no text is selected, insert a space
+        document.execCommand('insertHTML', false, '&nbsp;');
+      } else {
+        // Toggle strike on selected text
+        toggleStrike(range);
+      }
+      updateContent();
+    };
+
+    const toggleStrike = (range: Range) => {
+      const startNode = range.startContainer;
+      const endNode = range.endContainer;
+      const startOffset = range.startOffset;
+      const endOffset = range.endOffset;
+
+      const startInStrike = isInStrike(startNode);
+      const endInStrike = isInStrike(endNode);
+
+      if (startInStrike === endInStrike) {
+        // Both start and end are either in strike or not in strike
+        if (startInStrike) {
+          // Remove strike
+          removeStrike(range);
+        } else {
+          // Add strike
+          addStrike(range);
+        }
+      } else {
+        // Selection crosses strike boundary
+        if (startInStrike) {
+          // Extend strike to end
+          extendStrikeToEnd(range);
+        } else {
+          // Extend non-strike to end
+          extendNonStrikeToEnd(range);
+        }
+      }
+    };
+
+    const isInStrike = (node: Node): boolean => {
+      while (node && node !== editableDiv.value) {
+        if (node.nodeName === 'STRIKE') return true;
+        node = node.parentNode!;
+      }
+      return false;
+    };
+
+    const removeStrike = (range: Range) => {
+      const fragment = range.extractContents();
+      const tempDiv = document.createElement('div');
+      tempDiv.appendChild(fragment);
+
+      // Remove all strike tags within the selection
+      const strikes = tempDiv.querySelectorAll('strike');
+      strikes.forEach(strike => {
+        while (strike.firstChild) {
+          strike.parentNode!.insertBefore(strike.firstChild, strike);
+        }
+        strike.parentNode!.removeChild(strike);
+      });
+
+      // Check if we need to split an existing strike
+      const startStrike = getParentStrike(range.startContainer);
+      if (startStrike) {
+        const beforeRange = document.createRange();
+        beforeRange.setStartBefore(startStrike);
+        beforeRange.setEnd(range.startContainer, range.startOffset);
+        const beforeFragment = beforeRange.extractContents();
+        const beforeStrike = document.createElement('strike');
+        beforeStrike.appendChild(beforeFragment);
+        startStrike.parentNode!.insertBefore(beforeStrike, startStrike);
+
+        const afterRange = document.createRange();
+        afterRange.setStart(range.endContainer, range.endOffset);
+        afterRange.setEndAfter(startStrike);
+        const afterFragment = afterRange.extractContents();
+        const afterStrike = document.createElement('strike');
+        afterStrike.appendChild(afterFragment);
+        startStrike.parentNode!.insertBefore(afterStrike, startStrike.nextSibling);
+
+        startStrike.parentNode!.removeChild(startStrike);
+      }
+
+      // Reinsert the content
+      range.insertNode(tempDiv);
+      while (tempDiv.firstChild) {
+        tempDiv.parentNode!.insertBefore(tempDiv.firstChild, tempDiv);
+      }
+      tempDiv.parentNode!.removeChild(tempDiv);
+    };
+
+    const addStrike = (range: Range) => {
+      const fragment = range.extractContents();
+      const strike = document.createElement('strike');
+      strike.appendChild(fragment);
+      range.insertNode(strike);
+    };
+
+    const extendStrikeToEnd = (range: Range) => {
+      const startStrike = getParentStrike(range.startContainer);
+      if (!startStrike) return;
+
+      const newRange = document.createRange();
+      newRange.setStart(startStrike, 0);
+      newRange.setEnd(range.endContainer, range.endOffset);
+
+      const fragment = newRange.extractContents();
+      const strike = document.createElement('strike');
+      strike.appendChild(fragment);
+      newRange.insertNode(strike);
+    };
+
+    const extendNonStrikeToEnd = (range: Range) => {
+      const endStrike = getParentStrike(range.endContainer);
+      if (!endStrike) return;
+
+      const newRange = document.createRange();
+      newRange.setStart(range.startContainer, range.startOffset);
+      newRange.setEnd(endStrike, endStrike.childNodes.length);
+
+      removeStrike(newRange);
+    };
+
+    const getParentStrike = (node: Node): HTMLElement | null => {
+      while (node && node !== editableDiv.value) {
+        if (node.nodeName === 'STRIKE') return node as HTMLElement;
+        node = node.parentNode!;
+      }
+      return null;
+    };
+
+    const cleanupEmptyStrikes = () => {
+      if (!editableDiv.value) return;
+      const emptyStrikes = editableDiv.value.querySelectorAll('strike:empty');
+      emptyStrikes.forEach(strike => strike.parentNode!.removeChild(strike));
+    };
+
+    const handleClick = (event: MouseEvent) => {
+      const currentTime = new Date().getTime();
+      if (currentTime - lastClickTime > 400) {
+        clickCount = 0;
+      }
+      clickCount++;
+      lastClickTime = currentTime;
+
+      if (clickCount === 3) {
+        event.preventDefault();
+        selectCurrentArea(event);
+        clickCount = 0;
+      }
+    };
+
+    const selectCurrentArea = (event: MouseEvent) => {
+      const selection = window.getSelection();
+      if (!selection || !editableDiv.value) return;
+
+      const range = document.createRange();
+      let node = event.target as Node;
+      let startNode = node;
+      let endNode = node;
+
+      // Find the start of the current area
+      while (startNode.previousSibling && 
+             (startNode.nodeName !== 'STRIKE' && startNode.previousSibling.nodeName !== 'STRIKE')) {
+        startNode = startNode.previousSibling;
+      }
+
+      // Find the end of the current area
+      while (endNode.nextSibling && 
+             (endNode.nodeName !== 'STRIKE' && endNode.nextSibling.nodeName !== 'STRIKE')) {
+        endNode = endNode.nextSibling;
+      }
+
+      range.setStartBefore(startNode);
+      range.setEndAfter(endNode);
+
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
+
+    const generateContent = async () => {
+      loading.value = true;
+      error.value = '';
+
+      try {
+        const apiFormat = convertToApiFormat(editableDiv.value!.innerHTML);
+        const response = await axios.post('http://localhost:3000/api/generate', apiFormat);
+        const generatedContent = response.data.content;
+
+        if (editableDiv.value) {
+          editableDiv.value.innerHTML = convertFromApiFormat(generatedContent);
+        }
+
+        updateContent();
+      } catch (err) {
+        error.value = 'Failed to generate content. Please try again.';
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const convertToApiFormat = (html: string): ApiChunk[] => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const chunks: ApiChunk[] = [];
+      let currentChunk: ApiChunk = {};
+
+      const processNode = (node: Node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent || '';
+          if (text.trim()) {
+            if (currentChunk.pinned) {
+              currentChunk.pinned += text;
+            } else {
+              currentChunk.pinned = text;
+            }
+          }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as HTMLElement;
+          if (element.tagName.toLowerCase() === 'strike') {
+            if (currentChunk.pinned) {
+              chunks.push(currentChunk);
+              currentChunk = {};
+            }
+            chunks.push({ placeholder: (element.textContent || '').length });
+          } else {
+            Array.from(element.childNodes).forEach(processNode);
+          }
+        }
+      };
+
+      Array.from(doc.body.childNodes).forEach(processNode);
+
+      if (currentChunk.pinned) {
+        chunks.push(currentChunk);
+      }
+
+      return chunks;
+    };
+
+    const convertFromApiFormat = (apiContent: string): string => {
+      const chunks: ApiChunk[] = JSON.parse(apiContent);
+      let html = '';
+
+      chunks.forEach(chunk => {
+        if (chunk.pinned) {
+          html += chunk.pinned;
+        } else if (chunk.draft || chunk.unpinned) {
+          html += `<strike>${chunk.draft || chunk.unpinned}</strike>`;
+        } else if (chunk.placeholder) {
+          html += `<strike>${'x'.repeat(chunk.placeholder)}</strike>`;
+        }
+      });
+
+      return html;
+    };
+
+    onMounted(() => {
+      if (editableDiv.value) {
+        content.value = store.state.documentContent || '';
+        editableDiv.value.innerHTML = content.value || '<strike>Start typing here...</strike>';
+      }
+    });
+
     return {
-      loading: false,
-      error: '',
-      textChunks: [] as TextChunk[],
-      cursorPosition: { nodeIndex: 0, offset: 0 },
-      store: useStore()
+      editableDiv,
+      content,
+      loading,
+      error,
+      updateContent,
+      handleSpace,
+      generateContent,
+      handleClick,
     };
   },
-  computed: {
-    ...mapState(['documentContent'])
-  },
-  methods: {
-    ...mapActions(['saveDocument', 'loadDocument']),
-    async generateContent() {
-      console.log('Generate Content button clicked');
-      const prompt = this.encodeTextChunks();
-      console.log('Encoded prompt:', prompt);
-      if (prompt.length === 0) {
-        this.error = 'Document content is empty';
-        return;
-      }
-      this.loading = true;
-      this.error = '';
-      try {
-        console.log('Sending request to backend with prompt:', prompt);
-        const response = await axios.post('http://localhost:3000/api/generate', prompt);
-        console.log('API call made successfully');
-        const generatedContent = response.data.content;
-        console.log('Generated content:', generatedContent);
-        console.log('Received generated content:', response.data);
-        console.log('Merging generated content with existing text chunks');
-        this.textChunks = this.mergeGeneratedContent(this.textChunks, generatedContent.trim());
-        console.log('Updated text chunks:', this.textChunks);
-        this.cleanupChunks();
-        this.store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
-        this.saveDocument();
-      } catch (error) {
-        console.error('Error generating content:', (error as any).message);
-        console.error('Error details:', error);
-        this.error = 'Failed to generate content. Please try again.';
-      } finally {
-        this.loading = false;
-      }
-    },
-    saveDocument() {
-      this.store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
-      this.store.dispatch('saveDocument');
-    },
-    handleSpacebar(event: KeyboardEvent) {
-      const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0 && selection.toString()) {
-        event.preventDefault();
-        this.togglePin();
-      }
-    },
-    togglePin() {
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) return;
-
-      const range = selection.getRangeAt(0);
-      const selectedText = range.toString();
-      if (!selectedText) return;
-
-      const textContent = (this.$el.querySelector('.editable-text') as HTMLElement).innerText;
-      const sentences = textContent.split(/(?<=[.!?])(?=\s|\n)/g).filter(sentence => sentence.trim() !== '');
-      let currentIndex = 0;
-      let startSentenceIndex = -1;
-      let endSentenceIndex = -1;
-
-      for (let i = 0; i < sentences.length; i++) {
-        const sentence = sentences[i];
-        const sentenceLength = sentence.length;
-
-        if (currentIndex <= range.startOffset && currentIndex + sentenceLength > range.startOffset) {
-          startSentenceIndex = i;
-        }
-        if (currentIndex <= range.endOffset && currentIndex + sentenceLength >= range.endOffset) {
-          endSentenceIndex = i;
-        }
-        currentIndex += sentenceLength; // No need to adjust for the separator
-      }
-
-      if (startSentenceIndex === -1 || endSentenceIndex === -1) return;
-
-      for (let i = startSentenceIndex; i <= endSentenceIndex; i++) {
-        const sentence = sentences[i];
-        const chunkIndex = this.textChunks.findIndex(chunk => chunk.text.includes(sentence));
-        if (chunkIndex !== -1) {
-          this.textChunks[chunkIndex].pinned = !this.textChunks[chunkIndex].pinned;
-        }
-      }
-
-      this.cleanupChunks();
-      this.saveCursorPosition();
-    },
-    updateTextContent(event: InputEvent) {
-      this.saveCursorPosition(); // Save cursor position before updating text
-      const textContent = (event.target as HTMLElement).textContent || '';
-      const sections = textContent.split(/(?<=[.!?])(?=\s+|\n+)/g).filter(section => section.trim() !== '');
-      const newChunks: TextChunk[] = sections.map(section => ({ text: section.trim(), pinned: false }));
-
-      this.textChunks = newChunks;
-      this.store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
-      this.saveDocument();
-      this.restoreCursorPosition(); // Restore cursor position after updating text
-    },
-    mergeGeneratedContent(chunks: TextChunk[], generatedContent: string): TextChunk[] {
-      const parsedContent = JSON.parse(generatedContent);
-      const newChunks: TextChunk[] = [];
-
-      parsedContent.forEach((content: any) => {
-        if (content.pinned) {
-          newChunks.push({ text: content.pinned, pinned: true });
-        } else if (content.draft) {
-          newChunks.push({ text: content.draft, pinned: false });
-        }
-      });
-
-      return newChunks;
-    },
-    saveCursorPosition() {
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) return;
-      const range = selection.getRangeAt(0);
-      const node = range.startContainer;
-      const offset = range.startOffset;
-
-      // Find the index of the node within the editable text container
-      const editableText = this.$el.querySelector('.editable-text');
-      if (editableText) {
-        const nodes = Array.from(editableText.childNodes);
-        const nodeIndex = nodes.findIndex((n) => (n as Node).contains(node));
-        this.cursorPosition = { nodeIndex, offset };
-      }
-    },
-    restoreCursorPosition() {
-      nextTick(() => {
-        const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0) return;
-        const range = document.createRange();
-        const editableText = this.$el.querySelector('.editable-text');
-        if (editableText) {
-          const nodes = Array.from(editableText.childNodes);
-          const node = nodes[this.cursorPosition.nodeIndex];
-          if (node && (node as Node).nodeType === Node.TEXT_NODE) {
-            const offset = Math.min(this.cursorPosition.offset, (node as Node).textContent?.length || 0);
-            range.setStart(node as Node, offset);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-          } else if (node && (node as Node).nodeType === Node.ELEMENT_NODE && (node as Node).firstChild) {
-            const offset = Math.min(this.cursorPosition.offset, (node as Node).firstChild?.textContent?.length || 0);
-            range.setStart((node as Node).firstChild as Node, offset);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-          }
-        }
-      });
-    },
-    encodeTextChunks(): Array<{ placeholder?: number; pinned?: string; unpinned?: string }> {
-      const encodedChunks: Array<{ placeholder?: number; pinned?: string; unpinned?: string }> = [];
-      let unpinnedTextLength = 0;
-
-      this.textChunks.forEach(chunk => {
-        if (chunk.pinned) {
-          if (unpinnedTextLength > 0) {
-            encodedChunks.push({ placeholder: unpinnedTextLength });
-            unpinnedTextLength = 0;
-          }
-          encodedChunks.push({ pinned: chunk.text });
-        } else {
-          unpinnedTextLength += chunk.text.length;
-        }
-      });
-
-      if (unpinnedTextLength > 0) {
-        encodedChunks.push({ placeholder: unpinnedTextLength });
-      }
-
-      return encodedChunks;
-    },
-    cleanupChunks() {
-      let cleanedChunks: TextChunk[] = [];
-      for (let i = 0; i < this.textChunks.length; i++) {
-        const currentChunk = this.textChunks[i];
-        // Skip empty chunks but keep spaces
-        if (currentChunk.text.trim() === '' && currentChunk.text !== ' ') continue;
-        if (cleanedChunks.length === 0) {
-          cleanedChunks.push(currentChunk);
-        } else {
-          const lastChunk = cleanedChunks[cleanedChunks.length - 1];
-          if (lastChunk.pinned === currentChunk.pinned) {
-            lastChunk.text += currentChunk.text; // Merge with the last chunk
-          } else {
-            cleanedChunks.push(currentChunk);
-          }
-        }
-      }
-      this.textChunks = cleanedChunks;
-    }
-  },
-  mounted() {
-    this.loadDocument();
-    this.textChunks = [{ text: this.documentContent, pinned: false }];
-  },
-  updated() {
-    this.restoreCursorPosition();
-  }
 });
 </script>
 
-<style scoped>
-.text-grey {
-  color: #A9A9A9; /* Adjusted to a lighter grey for better contrast */
-}
-.text-black {
-  color: #000000;
-}
+<style>
 .editable-text {
   white-space: pre-wrap;
   min-height: 200px;
+  line-height: 1.6;
+  padding: 10px;
+}
+
+.editable-text strike {
+  text-decoration: none;
+  color: #5a6270;
+  background-color: #f0f2f5;
+  border-radius: 3px;
+  padding: 2px 0;
+}
+
+/* Styling for selected text */
+.editable-text ::selection {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.editable-text strike::selection {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+/* Additional styles to make the distinction clearer */
+.editable-text p {
+  margin-bottom: 10px;
+}
+
+.editable-text:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #e3f2fd;
+}
+
+/* Tooltip-like hint */
+.editable-text:before {
+  content: 'Select text to pin/unpin';
+  display: block;
+  position: absolute;
+  top: -30px;
+  left: 10px;
+  background-color: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.editable-text:hover:before {
+  opacity: 1;
 }
 </style>
