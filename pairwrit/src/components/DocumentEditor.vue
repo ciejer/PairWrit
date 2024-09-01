@@ -49,19 +49,6 @@ export default defineComponent({
       store.commit('setDocumentContent', content.value);
     };
 
-    return {
-      editableDiv,
-      content,
-      title,
-      loading,
-      error,
-      updateContent,
-      handleSpace,
-      generateContent,
-      handleClick,
-      updateTitle,
-    };
-
     const handleSpace = (event: KeyboardEvent) => {
       const selection = window.getSelection();
       if (!selection || selection.rangeCount === 0) return;
