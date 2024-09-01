@@ -11,7 +11,7 @@ export default createStore({
     },
     setTitle(state, newTitle) {
       state.title = newTitle;
-    }
+    },
     loadDocumentContent(state) {
       const content = localStorage.getItem('document');
       state.documentContent = content || '';
