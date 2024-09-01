@@ -35,7 +35,7 @@ export default defineComponent({
     const store = useStore();
     const editableDiv = ref<HTMLElement | null>(null);
     const content = ref('');
-    const title = ref('');
+    const title = ref<string>('');
     const loading = ref(false);
     const error = ref('');
 
@@ -47,6 +47,19 @@ export default defineComponent({
       cleanupEmptyStrikes();
       content.value = editableDiv.value.innerHTML;
       store.commit('setDocumentContent', content.value);
+    };
+
+    return {
+      editableDiv,
+      content,
+      title,
+      loading,
+      error,
+      updateContent,
+      handleSpace,
+      generateContent,
+      handleClick,
+      updateTitle,
     };
 
     const handleSpace = (event: KeyboardEvent) => {
