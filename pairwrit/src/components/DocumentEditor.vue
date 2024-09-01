@@ -99,7 +99,7 @@ export default defineComponent({
       if (!selectedText) return;
 
       const textContent = (this.$el.querySelector('.editable-text') as HTMLElement).innerText;
-      const sentences = textContent.split(/(?<=[.!?])(?=\s+|\n+)/g).filter(sentence => sentence.trim() !== '');
+      const sentences = textContent.split(/(?<=[.!?])(?=\s|\n)/g).filter(sentence => sentence.trim() !== '');
       let currentIndex = 0;
       let startSentenceIndex = -1;
       let endSentenceIndex = -1;
@@ -114,7 +114,7 @@ export default defineComponent({
         if (currentIndex <= range.endOffset && currentIndex + sentenceLength >= range.endOffset) {
           endSentenceIndex = i;
         }
-        currentIndex += sentenceLength + 1; // Adjust for the separator
+        currentIndex += sentenceLength; // No need to adjust for the separator
       }
 
       if (startSentenceIndex === -1 || endSentenceIndex === -1) return;
