@@ -1,7 +1,7 @@
 <template>
   <header class="bg-gray-800 text-white p-4 shadow-md">
     <div class="container mx-auto flex justify-between items-center">
-      <h1 class="text-2xl font-bold">My Application</h1>
+      <h1 class="text-2xl font-bold">PairWrit</h1>
     </div>
   </header>
 </template>

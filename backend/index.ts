@@ -45,6 +45,7 @@ app.post('/api/generate', async (req, res) => {
             The document (as shown by the draft and pinned sections together) should make sense and be coherent.
             Each placeholder object should be replaced with a single draft object, and filled with text of roughly the same character count given in the placeholder integer.
             You must have no placeholder objects left after this draft!
+            Consider flow between pinned text and drafts - they will be displayed immediately adjacent as a single body of text, so think about punctuation and spacing.
             Example input: [{"title": "Expanding Market Reach"}, {"placeholder": 40}, {"pinned", "sustainability"}, {"placeholder": 25}, {"pinned", "reducing waste"}, {"placeholder": 5}, {"pinned", "conserving resources"}, {"placeholder": 17}, {"pinned", "recycling programs"}, {"placeholder": 5}, {"pinned", "energy-efficient"}, {"placeholder": 32}, {"pinned", "environmental impact"}, {"placeholder": 1}]
             Example output:[{"title": "Expanding Market Reach"}, {"draft": "Expanding market reach involves focusing on "}, {"pinned", "sustainability"}, {"draft": " initiatives. We should concentrate on "}, {"pinned", "reducing waste"}, {"draft": " and "}, {"pinned", "conserving resources"}, {"draft": " to appeal to eco-conscious consumers. By implementing "}, {"pinned", "recycling programs"}, {"draft": " and "}, {"pinned", "energy-efficient"}, {"draft": " practices, we can minimize our "}, {"pinned", "environmental impact"}, {"draft": "."}]`
           },
