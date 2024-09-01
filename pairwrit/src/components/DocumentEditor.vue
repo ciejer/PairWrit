@@ -1,7 +1,7 @@
 <template>
   <div class="p-6 bg-gray-100 min-h-screen">
     <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg overflow-hidden">
-      <Toolbar @generateContent="generateContent" />
+      <Toolbar :title="title" @updateTitle="updateTitle" @generateContent="generateContent" />
       <div 
         ref="editableDiv"
         contenteditable="true" 
@@ -35,6 +35,7 @@ export default defineComponent({
     const store = useStore();
     const editableDiv = ref<HTMLElement | null>(null);
     const content = ref('');
+    const title = ref('');
     const loading = ref(false);
     const error = ref('');
 
@@ -234,13 +235,21 @@ export default defineComponent({
       selection.addRange(range);
     };
 
+    const updateTitle = (newTitle: string) => {
+      title.value = newTitle;
+    };
+
     const generateContent = async () => {
+      if (!title.value) {
+        error.value = 'Title is required.';
+        return;
+      }
       loading.value = true;
       error.value = '';
 
       try {
         const apiFormat = convertToApiFormat(editableDiv.value!.innerHTML);
-        const response = await axios.post('http://localhost:3000/api/generate', apiFormat);
+        const response = await axios.post('http://localhost:3000/api/generate', { title: title.value, ...apiFormat });
         const generatedContent = response.data.content;
 
         if (editableDiv.value) {
