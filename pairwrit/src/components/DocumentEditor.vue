@@ -132,20 +132,7 @@ export default defineComponent({
         if (currentIndex + chunkLength <= startIndex || currentIndex >= endIndex) {
           newChunks.push(chunk);
         } else {
-          if (currentIndex < startIndex) {
-            const before = chunk.text.slice(0, startIndex - currentIndex);
-            newChunks.push({ text: before, pinned: chunk.pinned });
-          }
-
-          const overlapStart = Math.max(startIndex, currentIndex);
-          const overlapEnd = Math.min(endIndex, currentIndex + chunkLength);
-          const overlapText = chunk.text.slice(overlapStart - currentIndex, overlapEnd - currentIndex);
-          newChunks.push({ text: overlapText, pinned: !chunk.pinned });
-
-          if (currentIndex + chunkLength > endIndex) {
-            const after = chunk.text.slice(endIndex - currentIndex);
-            newChunks.push({ text: after, pinned: chunk.pinned });
-          }
+          newChunks.push({ text: chunk.text, pinned: !chunk.pinned });
         }
 
         currentIndex += chunkLength;
@@ -158,21 +145,8 @@ export default defineComponent({
     updateTextContent(event: InputEvent) {
       this.saveCursorPosition(); // Save cursor position before updating text
       const textContent = (event.target as HTMLElement).innerText;
-      const newChunks: TextChunk[] = [];
-      let currentIndex = 0;
-
-      for (const chunk of this.textChunks) {
-        const chunkLength = chunk.text.length;
-        const newText = textContent.slice(currentIndex, currentIndex + chunkLength);
-
-        if (chunk.pinned) {
-          newChunks.push({ text: chunk.text, pinned: true });
-          currentIndex += chunkLength;
-        } else {
-          newChunks.push({ text: newText, pinned: false });
-          currentIndex += newText.length;
-        }
-      }
+      const sentences = textContent.match(/[^.!?]+[.!?]+[\])'"`’”]*|.+/g) || [];
+      const newChunks: TextChunk[] = sentences.map(sentence => ({ text: sentence, pinned: false }));
 
       this.textChunks = newChunks;
       this.store.commit('setDocumentContent', this.textChunks.map(chunk => chunk.text).join(''));
