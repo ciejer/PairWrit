@@ -2,6 +2,7 @@
   <div class="p-6 bg-gray-100 min-h-screen">
     <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg overflow-hidden">
       <Toolbar :title="title" @updateTitle="updateTitle" @generateContent="generateContent" />
+      <div>{{ title }}</div> <!-- Debugging line to check if title is being updated -->
       <div 
         ref="editableDiv"
         contenteditable="true" 
