@@ -99,7 +99,7 @@ export default defineComponent({
       if (!selectedText) return;
 
       const textContent = (this.$el.querySelector('.editable-text') as HTMLElement).innerText;
-      const sentences = textContent.split(/\n+/g).filter(sentence => sentence.trim() !== '');
+      const sentences = textContent.split(/(?<=[.!?])\s+|\n+/g).filter(sentence => sentence.trim() !== '');
       let currentIndex = 0;
       let startSentenceIndex = -1;
       let endSentenceIndex = -1;
@@ -133,7 +133,7 @@ export default defineComponent({
     updateTextContent(event: InputEvent) {
       this.saveCursorPosition(); // Save cursor position before updating text
       const textContent = (event.target as HTMLElement).innerText;
-      const sections = textContent.split(/\n+/g).filter(section => section.trim() !== '');
+      const sections = textContent.split(/(?<=[.!?])\s+|\n+/g).filter(section => section.trim() !== '');
       const newChunks: TextChunk[] = sections.map(section => ({ text: section.trim(), pinned: false }));
 
       this.textChunks = newChunks;
