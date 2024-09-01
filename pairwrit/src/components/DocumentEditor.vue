@@ -132,7 +132,7 @@ export default defineComponent({
     },
     updateTextContent(event: InputEvent) {
       this.saveCursorPosition(); // Save cursor position before updating text
-      const textContent = (event.target as HTMLElement).innerText;
+      const textContent = (event.target as HTMLElement).textContent || '';
       const sections = textContent.split(/(?<=[.!?])\s+|\n+/g).filter(section => section.trim() !== '');
       const newChunks: TextChunk[] = sections.map(section => ({ text: section.trim(), pinned: false }));
 
