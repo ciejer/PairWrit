@@ -98,47 +98,35 @@ export default defineComponent({
       const selectedText = range.toString();
       if (!selectedText) return;
 
-      const startContainer = range.startContainer;
-      const endContainer = range.endContainer;
-      const startOffset = range.startOffset;
-      const endOffset = range.endOffset;
-
+      const textContent = (this.$el.querySelector('.editable-text') as HTMLElement).innerText;
+      const sentences = textContent.match(/[^.!?]+[.!?]+[\])'"`’”]*|.+/g) || [];
       let currentIndex = 0;
-      let startIndex = -1;
-      let endIndex = -1;
+      let startSentenceIndex = -1;
+      let endSentenceIndex = -1;
 
-      for (let i = 0; i < this.textChunks.length; i++) {
-        const chunk = this.textChunks[i];
-        const chunkLength = chunk.text.length;
+      for (let i = 0; i < sentences.length; i++) {
+        const sentence = sentences[i];
+        const sentenceLength = sentence.length;
 
-        if (startContainer.textContent === chunk.text && startIndex === -1) {
-          startIndex = currentIndex + startOffset;
+        if (currentIndex <= range.startOffset && currentIndex + sentenceLength >= range.startOffset) {
+          startSentenceIndex = i;
         }
-        if (endContainer.textContent === chunk.text && endIndex === -1) {
-          endIndex = currentIndex + endOffset;
+        if (currentIndex <= range.endOffset && currentIndex + sentenceLength >= range.endOffset) {
+          endSentenceIndex = i;
         }
-        currentIndex += chunkLength;
+        currentIndex += sentenceLength;
       }
 
-      if (startIndex === -1 || endIndex === -1) return;
+      if (startSentenceIndex === -1 || endSentenceIndex === -1) return;
 
-      let newChunks: TextChunk[] = [];
-      currentIndex = 0;
-
-      for (let i = 0; i < this.textChunks.length; i++) {
-        const chunk = this.textChunks[i];
-        const chunkLength = chunk.text.length;
-
-        if (currentIndex + chunkLength <= startIndex || currentIndex >= endIndex) {
-          newChunks.push(chunk);
-        } else {
-          newChunks.push({ text: chunk.text, pinned: !chunk.pinned });
+      for (let i = startSentenceIndex; i <= endSentenceIndex; i++) {
+        const sentence = sentences[i];
+        const chunkIndex = this.textChunks.findIndex(chunk => chunk.text.includes(sentence));
+        if (chunkIndex !== -1) {
+          this.textChunks[chunkIndex].pinned = !this.textChunks[chunkIndex].pinned;
         }
-
-        currentIndex += chunkLength;
       }
 
-      this.textChunks = newChunks;
       this.cleanupChunks();
       this.saveCursorPosition();
     },
