@@ -2,15 +2,8 @@
   <div class="p-6 bg-gray-100 min-h-screen">
     <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg overflow-hidden">
       <Toolbar :title="title" @update-title="updateTitle" @generateContent="generateContent" />
-      <div>{{ title }}</div> <!-- Debugging line to check if title is being updated -->
-      <div 
-        ref="editableDiv"
-        contenteditable="true" 
-        @input="updateContent"
-        @keydown.space.prevent="handleSpace"
-        @click="handleClick"
-        class="editable-text p-4 border-t border-gray-200"
-      ></div>
+      <div>{{ title }}</div>
+      <div ref="editorElement"></div>
       <div v-if="loading" class="p-4 text-blue-500">Generating content...</div>
       <div v-if="error" class="p-4 text-red-500">{{ error }}</div>
     </div>
@@ -18,229 +11,47 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { ref, onMounted, computed, defineComponent } from 'vue';
+import store from '../store'; // Adjust the path as needed
+import Editor from '@toast-ui/editor';
+import '@toast-ui/editor/dist/toastui-editor.css';
 import Toolbar from './Toolbar.vue';
-import { useStore } from 'vuex';
 import axios from 'axios';
 
 interface ApiChunk {
-  draft?: string;
   pinned?: string;
-  placeholder?: number;
+  draft?: string;
   unpinned?: string;
+  placeholder?: number;
+  title?: string;
 }
 
 export default defineComponent({
-  components: { Toolbar },
+  components: {
+    Toolbar
+  },
   setup() {
-    const store = useStore();
-    const editableDiv = ref<HTMLElement | null>(null);
-    const content = ref('');
-    const title = ref<string>('');
+    const editorElement = ref<HTMLElement | null>(null);
+    const editor = ref<InstanceType<typeof Editor> | null>(null);
+    const content = ref('<p>Hello, Toast UI Editor!</p>');
+    const title = computed({
+      get: () => store.state.title,
+      set: (value) => store.commit('setTitle', value)
+    });
     const loading = ref(false);
     const error = ref('');
 
-    let clickCount = 0;
-    let lastClickTime = 0;
-
     const updateContent = () => {
-      if (!editableDiv.value) return;
-      cleanupEmptyStrikes();
-      content.value = editableDiv.value.innerHTML;
-      store.commit('setDocumentContent', content.value);
-    };
-
-    const handleSpace = (event: KeyboardEvent) => {
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) return;
-
-      const range = selection.getRangeAt(0);
-      if (range.collapsed) {
-        // If no text is selected, insert a space
-        document.execCommand('insertHTML', false, '&nbsp;');
-      } else {
-        // Toggle strike on selected text
-        toggleStrike(range);
+      if (editor.value) {
+        const newContent = editor.value.getMarkdown();
+        console.log('Updating content:', newContent);
+        store.commit('setDocumentContent', newContent);
       }
-      updateContent();
-    };
-
-    const toggleStrike = (range: Range) => {
-      const startNode = range.startContainer;
-      const endNode = range.endContainer;
-      const startOffset = range.startOffset;
-      const endOffset = range.endOffset;
-
-      const startInStrike = isInStrike(startNode);
-      const endInStrike = isInStrike(endNode);
-
-      if (startInStrike === endInStrike) {
-        // Both start and end are either in strike or not in strike
-        if (startInStrike) {
-          // Remove strike
-          removeStrike(range);
-        } else {
-          // Add strike
-          addStrike(range);
-        }
-      } else {
-        // Selection crosses strike boundary
-        if (startInStrike) {
-          // Extend strike to end
-          extendStrikeToEnd(range);
-        } else {
-          // Extend non-strike to end
-          extendNonStrikeToEnd(range);
-        }
-      }
-    };
-
-    const isInStrike = (node: Node): boolean => {
-      while (node && node !== editableDiv.value) {
-        if (node.nodeName === 'STRIKE') return true;
-        node = node.parentNode!;
-      }
-      return false;
-    };
-
-    const removeStrike = (range: Range) => {
-      const fragment = range.extractContents();
-      const tempDiv = document.createElement('div');
-      tempDiv.appendChild(fragment);
-
-      // Remove all strike tags within the selection
-      const strikes = tempDiv.querySelectorAll('strike');
-      strikes.forEach(strike => {
-        while (strike.firstChild) {
-          strike.parentNode!.insertBefore(strike.firstChild, strike);
-        }
-        strike.parentNode!.removeChild(strike);
-      });
-
-      // Check if we need to split an existing strike
-      const startStrike = getParentStrike(range.startContainer);
-      if (startStrike) {
-        const beforeRange = document.createRange();
-        beforeRange.setStartBefore(startStrike);
-        beforeRange.setEnd(range.startContainer, range.startOffset);
-        const beforeFragment = beforeRange.extractContents();
-        const beforeStrike = document.createElement('strike');
-        beforeStrike.appendChild(beforeFragment);
-        startStrike.parentNode!.insertBefore(beforeStrike, startStrike);
-
-        const afterRange = document.createRange();
-        afterRange.setStart(range.endContainer, range.endOffset);
-        afterRange.setEndAfter(startStrike);
-        const afterFragment = afterRange.extractContents();
-        const afterStrike = document.createElement('strike');
-        afterStrike.appendChild(afterFragment);
-        startStrike.parentNode!.insertBefore(afterStrike, startStrike.nextSibling);
-
-        startStrike.parentNode!.removeChild(startStrike);
-      }
-
-      // Reinsert the content
-      range.insertNode(tempDiv);
-      while (tempDiv.firstChild) {
-        tempDiv.parentNode!.insertBefore(tempDiv.firstChild, tempDiv);
-      }
-      tempDiv.parentNode!.removeChild(tempDiv);
-    };
-
-    const addStrike = (range: Range) => {
-      const fragment = range.extractContents();
-      const strike = document.createElement('strike');
-      strike.appendChild(fragment);
-      range.insertNode(strike);
-    };
-
-    const extendStrikeToEnd = (range: Range) => {
-      const startStrike = getParentStrike(range.startContainer);
-      if (!startStrike) return;
-
-      const newRange = document.createRange();
-      newRange.setStart(startStrike, 0);
-      newRange.setEnd(range.endContainer, range.endOffset);
-
-      const fragment = newRange.extractContents();
-      const strike = document.createElement('strike');
-      strike.appendChild(fragment);
-      newRange.insertNode(strike);
-    };
-
-    const extendNonStrikeToEnd = (range: Range) => {
-      const endStrike = getParentStrike(range.endContainer);
-      if (!endStrike) return;
-
-      const newRange = document.createRange();
-      newRange.setStart(range.startContainer, range.startOffset);
-      newRange.setEnd(endStrike, endStrike.childNodes.length);
-
-      removeStrike(newRange);
-    };
-
-    const getParentStrike = (node: Node): HTMLElement | null => {
-      while (node && node !== editableDiv.value) {
-        if (node.nodeName === 'STRIKE') return node as HTMLElement;
-        node = node.parentNode!;
-      }
-      return null;
-    };
-
-    const cleanupEmptyStrikes = () => {
-      if (!editableDiv.value) return;
-      const emptyStrikes = editableDiv.value.querySelectorAll('strike:empty');
-      emptyStrikes.forEach(strike => strike.parentNode!.removeChild(strike));
-    };
-
-    const handleClick = (event: MouseEvent) => {
-      const currentTime = new Date().getTime();
-      if (currentTime - lastClickTime > 400) {
-        clickCount = 0;
-      }
-      clickCount++;
-      lastClickTime = currentTime;
-
-      if (clickCount === 3) {
-        event.preventDefault();
-        selectCurrentArea(event);
-        clickCount = 0;
-      }
-    };
-
-    const selectCurrentArea = (event: MouseEvent) => {
-      const selection = window.getSelection();
-      if (!selection || !editableDiv.value) return;
-
-      const range = document.createRange();
-      let node = event.target as Node;
-      let startNode = node;
-      let endNode = node;
-
-      // Find the start of the current area
-      while (startNode.previousSibling && 
-             (startNode.nodeName !== 'STRIKE' && startNode.previousSibling.nodeName !== 'STRIKE')) {
-        startNode = startNode.previousSibling;
-      }
-
-      // Find the end of the current area
-      while (endNode.nextSibling && 
-             (endNode.nodeName !== 'STRIKE' && endNode.nextSibling.nodeName !== 'STRIKE')) {
-        endNode = endNode.nextSibling;
-      }
-
-      range.setStartBefore(startNode);
-      range.setEndAfter(endNode);
-
-      selection.removeAllRanges();
-      selection.addRange(range);
     };
 
     const updateTitle = (newTitle: string) => {
-      console.log('updateTitle method called with:', newTitle); // Debugging line
-      console.log('Received title:', newTitle); // Debugging line
+      console.log('Updating title:', newTitle);
       title.value = newTitle;
-      console.log('Title updated:', title.value); // Debugging line to check if title is updated
     };
 
     const generateContent = async () => {
@@ -252,110 +63,176 @@ export default defineComponent({
       error.value = '';
 
       try {
-        const apiFormat = convertToApiFormat(editableDiv.value!.innerHTML);
+        console.log('Generating content for title:', title.value);
+        const markdown = editor.value?.getMarkdown() || '';
+        console.log('Current markdown:', markdown);
+        const apiFormat = convertToApiFormat(markdown);
+        console.log('Converted to API format:', apiFormat);
         const response = await axios.post('http://localhost:3000/api/generate', { title: title.value, ...apiFormat });
         const generatedContent = response.data.content;
+        console.log('Generated content:', generatedContent);
 
-        if (editableDiv.value) {
-          editableDiv.value.innerHTML = convertFromApiFormat(generatedContent);
+        if (editor.value) {
+          const newContent = convertFromApiFormat(generatedContent);
+          console.log('Converted from API format:', newContent);
+
+          // Log the editor's state before setting the content
+          console.log('Editor state before setting content:', editor.value.getMarkdown());
+
+          // Re-initialize the editor to ensure a clean state
+          console.log('Re-initializing editor...');
+          editor.value.destroy();
+          editor.value = new Editor({
+            el: editorElement.value,
+            height: '500px',
+            initialEditType: 'wysiwyg',
+            initialValue: newContent,
+            events: {
+              change: () => {
+                console.log('Content changed');
+              }
+            }
+          });
+          console.log('Editor re-initialized with new content.');
+
+          // Log the editor's state after setting the content
+          console.log('Editor state after setting content:', editor.value.getMarkdown());
+
+          updateContent();
         }
-
-        updateContent();
       } catch (err) {
+        console.error('Failed to generate content:', err);
         error.value = 'Failed to generate content. Please try again.';
       } finally {
         loading.value = false;
       }
     };
 
-    const convertToApiFormat = (html: string): ApiChunk[] => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const chunks: ApiChunk[] = [];
-      let currentChunk: ApiChunk = {};
+    const convertFromApiFormat = (apiContent: string): string => {
+      try {
+        const parsedContent = JSON.parse(apiContent);
+        console.log('Parsed API content:', parsedContent);
+        let markdown = '';
 
-      const processNode = (node: Node) => {
-        if (node.nodeType === Node.TEXT_NODE) {
-          const text = node.textContent || '';
-          if (text.trim()) {
-            if (currentChunk.pinned) {
-              currentChunk.pinned += text;
-            } else {
-              currentChunk.pinned = text;
-            }
+        parsedContent.forEach((chunk: any) => {
+          if (chunk.title) {
+            // Skip the title as requested
+          } else if (chunk.pinned) {
+            markdown += chunk.pinned;
+          } else if (chunk.draft) {
+            markdown += `~~${chunk.draft}~~`;
+          } else if (chunk.unpinned) {
+            markdown += `~~${chunk.unpinned}~~`;
+          } else if (chunk.placeholder) {
+            markdown += `~~${'x'.repeat(chunk.placeholder)}~~`;
           }
-        } else if (node.nodeType === Node.ELEMENT_NODE) {
-          const element = node as HTMLElement;
-          if (element.tagName.toLowerCase() === 'strike') {
-            if (currentChunk.pinned) {
-              chunks.push(currentChunk);
-              currentChunk = {};
-            }
-            chunks.push({ placeholder: (element.textContent || '').length });
-          } else {
-            Array.from(element.childNodes).forEach(processNode);
-          }
-        }
-      };
+        });
 
-      Array.from(doc.body.childNodes).forEach(processNode);
+        // Ensure line breaks are preserved
+        markdown = markdown.replace(/([^\n])\n([^\n])/g, '$1\n\n$2');
 
-      if (currentChunk.pinned) {
-        chunks.push(currentChunk);
+        console.log('Converted markdown:', markdown.trim());
+        return markdown.trim();
+      } catch (error) {
+        console.error('Error parsing API response:', error);
+        return 'Error parsing content';
       }
+    };
+
+    const convertToApiFormat = (markdown: string): ApiChunk[] => {
+      const chunks: ApiChunk[] = [];
+      const lines = markdown.split('\n');
+
+      lines.forEach((line, index) => {
+        const strikethroughRegex = /~~(.*?)~~/g;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = strikethroughRegex.exec(line)) !== null) {
+          if (match.index > lastIndex) {
+            chunks.push({ pinned: line.slice(lastIndex, match.index) });
+          }
+          chunks.push({ placeholder: match[1].length });
+          lastIndex = strikethroughRegex.lastIndex;
+        }
+
+        if (lastIndex < line.length) {
+          chunks.push({ pinned: line.slice(lastIndex) });
+        }
+
+        // Add a placeholder for line breaks
+        chunks.push({ pinned: '\n' });
+      });
 
       return chunks;
     };
 
-    const convertFromApiFormat = (apiContent: string): string => {
-      const chunks: ApiChunk[] = JSON.parse(apiContent);
-      let html = '';
-
-      chunks.forEach(chunk => {
-        if (chunk.pinned) {
-          html += chunk.pinned;
-        } else if (chunk.draft || chunk.unpinned) {
-          html += `<strike>${chunk.draft || chunk.unpinned}</strike>`;
-        } else if (chunk.placeholder) {
-          html += `<strike>${'x'.repeat(chunk.placeholder)}</strike>`;
+    const toggleStrikethrough = () => {
+      if (editor.value) {
+        const selection = editor.value.getSelection();
+        if (selection && selection[0] !== selection[1]) {
+          editor.value.exec('strike');
         }
-      });
-
-      return html;
+      }
     };
 
     onMounted(() => {
-      if (editableDiv.value) {
-        content.value = store.state.documentContent || '';
-        editableDiv.value.innerHTML = content.value || '<strike>Start typing here...</strike>';
-      }
+      if (editorElement.value) {
+        editor.value = new Editor({
+          el: editorElement.value,
+          height: '500px',
+          initialEditType: 'wysiwyg',
+          initialValue: content.value,
+          events: {
+            change: updateContent
+          },
+          customHTMLSanitizer: (html: string): string => html,
+          hooks: {
+            addImageBlobHook: (blob: Blob, callback: (url: string, altText: string) => void) => {
+              // Implement image upload logic here if needed
+              return false;
+            }
+          }
+        });
+
+        // Add custom keymap for space key
+        if (editor.value && 'addKeyMap' in editor.value) {
+          (editor.value as any).addKeyMap('SPACE', () => {
+            toggleStrikethrough();
+            return false; // Prevent default space behavior
+          }, 'wysiwyg');
+  }
+      console.log('Component mounted, loading initial content');
+      content.value = store.state.documentContent || '';
+      console.log('Initial content:', content.value);
+}
     });
 
     return {
-      editableDiv,
+      editorElement,
       content,
+      title,
       loading,
       error,
-      updateContent,
-      handleSpace,
-      generateContent,
-      handleClick,
-      title,
-      updateTitle
+      updateTitle,
+      generateContent
     };
-  },
+  }
 });
 </script>
 
 <style>
-.editable-text {
-  white-space: pre-wrap;
-  min-height: 200px;
+/* Toast UI Editor specific styles */
+.toastui-editor-contents {
+  font-size: 16px;
   line-height: 1.6;
-  padding: 10px;
 }
 
-.editable-text strike {
+.toastui-editor-contents p {
+  margin-bottom: 10px;
+}
+
+.toastui-editor-contents del {
   text-decoration: none;
   color: #5a6270;
   background-color: #f0f2f5;
@@ -364,28 +241,34 @@ export default defineComponent({
 }
 
 /* Styling for selected text */
-.editable-text ::selection {
+.toastui-editor-contents ::selection {
   background-color: #e3f2fd;
   color: #1565c0;
 }
 
-.editable-text strike::selection {
+.toastui-editor-contents del::selection {
   background-color: #fff3e0;
   color: #e65100;
 }
 
-/* Additional styles to make the distinction clearer */
-.editable-text p {
-  margin-bottom: 10px;
+/* Focus styles for the editor */
+.toastui-editor-defaultUI {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-.editable-text:focus {
+.toastui-editor-defaultUI:focus-within {
   outline: none;
   box-shadow: 0 0 0 2px #e3f2fd;
 }
 
-/* Tooltip-like hint */
-.editable-text:before {
+/* Tooltip-like hint (if needed) */
+.toastui-editor-defaultUI {
+  position: relative;
+}
+
+.toastui-editor-defaultUI::before {
   content: 'Select text to pin/unpin';
   display: block;
   position: absolute;
@@ -398,9 +281,10 @@ export default defineComponent({
   font-size: 12px;
   opacity: 0;
   transition: opacity 0.3s ease;
+  z-index: 1000;
 }
 
-.editable-text:hover:before {
+.toastui-editor-defaultUI:hover::before {
   opacity: 1;
 }
 </style>

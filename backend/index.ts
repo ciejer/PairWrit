@@ -42,12 +42,36 @@ app.post('/api/generate', async (req, res) => {
             role: 'system',
             content: `Populate this json array representing a document, replacing each "placeholder" character count with fully written "draft" text in the same place.
             You must keep the "pinned" text as is - do not even fix typos!
-            The document (as shown by the draft and pinned sections together) should make sense and be coherent.
+            You may receive a "template" string to guide your writing. This template will contain Markdown, and is to be used for structure and style only.
+            You may receive a "style" string to guide your writing. If set, this set of rules should be followed for the entire document.
+            Do not include any content from the template in your final document unless it makes sense in context.
+            The document (as shown by the draft and pinned sections together) should make sense, be coherent, and be valid Markdown.
             Each placeholder object should be replaced with a single draft object, and filled with text of roughly the same character count given in the placeholder integer.
             You must have no placeholder objects left after this draft!
             Consider flow between pinned text and drafts - they will be displayed immediately adjacent as a single body of text, so think about punctuation and spacing.
-            Example input: [{"title": "Expanding Market Reach"}, {"placeholder": 40}, {"pinned", "sustainability"}, {"placeholder": 25}, {"pinned", "reducing waste"}, {"placeholder": 5}, {"pinned", "conserving resources"}, {"placeholder": 17}, {"pinned", "recycling programs"}, {"placeholder": 5}, {"pinned", "energy-efficient"}, {"placeholder": 32}, {"pinned", "environmental impact"}, {"placeholder": 1}]
-            Example output:[{"title": "Expanding Market Reach"}, {"draft": "Expanding market reach involves focusing on "}, {"pinned", "sustainability"}, {"draft": " initiatives. We should concentrate on "}, {"pinned", "reducing waste"}, {"draft": " and "}, {"pinned", "conserving resources"}, {"draft": " to appeal to eco-conscious consumers. By implementing "}, {"pinned", "recycling programs"}, {"draft": " and "}, {"pinned", "energy-efficient"}, {"draft": " practices, we can minimize our "}, {"pinned", "environmental impact"}, {"draft": "."}]`
+            You must consider Markdown formatting for the overall document.
+            Example input:
+              {
+                "title": "Expanding Market Reach",
+                "template": "Preparing wood for a furnace involves focusing on **proper seasoning**. We should concentrate on **reducing moisture content** and **ensuring adequate airflow** to optimize combustion. By implementing **stacking methods** and **covering techniques**, we can minimize our **fuel consumption**.",
+                "style": "NZ English",
+                "document": [
+                  {"placeholder": 40, "id": "a1b2"},
+                  {"pinned": "sustainability", "id": "c3d4"},
+                  {"placeholder": 25, "id": "e5f6"},
+                  {"pinned": "reducing waste", "id": "g7h8"},
+                  {"placeholder": 5, "id": "i9j0"},
+                  {"pinned": "conserving resources", "id": "k1l2"},
+                  {"placeholder": 17, "id": "m3n4"},
+                  {"pinned": "recycling programs", "id": "o5p6"},
+                  {"placeholder": 5, "id": "q7r8"},
+                  {"pinned": "energy-efficient", "id": "s9t0"},
+                  {"placeholder": 32, "id": "u1v2"},
+                  {"pinned": "environmental impact", "id": "w3x4"},
+                  {"placeholder": 1, "id": "y5z6"}
+              ]
+            }
+            Example output:[{"draft": "Expanding market reach involves focusing on **"}, {"pinned", "sustainability"}, {"draft": " initiatives**. We should concentrate on "}, {"pinned", "reducing waste"}, {"draft": " and "}, {"pinned", "conserving resources"}, {"draft": " to appeal to **eco-conscious consumers**. By implementing "}, {"pinned", "recycling programs"}, {"draft": " and "}, {"pinned", "energy-efficient"}, {"draft": " practices, we can minimise our "}, {"pinned", "environmental impact"}, {"draft": "."}]`
           },
           {
             role: 'user',

@@ -1,30 +1,39 @@
-import { createStore } from 'vuex';
+import Vuex from 'vuex';
 
-export default createStore({
-  state: {
-    documentContent: '',
-    title: ''
+interface State {
+  documentContent: string;
+  title: string;
+}
+
+const state: State = {
+  documentContent: '',
+  title: ''
+};
+
+const mutations = {
+  setDocumentContent(state: State, content: string) {
+    state.documentContent = content;
   },
-  mutations: {
-    setDocumentContent(state, content) {
-      state.documentContent = content;
-    },
-    setTitle(state, newTitle) {
-      state.title = newTitle;
-    },
-    loadDocumentContent(state) {
-      const content = localStorage.getItem('document');
-      state.documentContent = content || '';
-    }
+  setTitle(state: State, newTitle: string) {
+    state.title = newTitle;
   },
-  actions: {
-    saveDocument({ state }) {
-      localStorage.setItem('document', state.documentContent);
-    },
-    loadDocument({ commit }) {
-      commit('loadDocumentContent');
-    }
-  },
-  modules: {
+  loadDocumentContent(state: State) {
+    const content = localStorage.getItem('document');
+    state.documentContent = content || '';
   }
+};
+
+const actions = {
+  saveDocument({ state }: { state: State }) {
+    localStorage.setItem('document', state.documentContent);
+  },
+  loadDocument({ commit }: { commit: Function }) {
+    commit('loadDocumentContent');
+  }
+};
+
+export default new Vuex.Store({
+  state,
+  mutations,
+  actions
 });
